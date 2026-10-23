@@ -276,7 +276,7 @@ If the repository already contains code or documentation that the roadmap does n
 
 **Location:** `C:\Users\Anushka\OneDrive\Desktop\vistaromvp`
 **Remote:** `origin` = `https://github.com/vistaroai/Vistaro-MVP.git`
-**Branch:** `repo-001-bootstrap`, created from `main`; commit `4de4a31` "REPO-001: bootstrap monorepo". Local only; not pushed.
+**Branch:** `repo-001-bootstrap`, created from `main`; commit `4de4a31` "REPO-001: bootstrap monorepo"; a follow-up docs-only commit records verification. Local only; not pushed.
 **Working tree:** clean at the tested commit. The bootstrap was re-tested from a fresh clone at `C:\Users\Anushka\AppData\Local\Temp\opencode\vistaro-repo001-clone`.
 
 **Structure:** monorepo bootstrap. The repository now contains a minimal FastAPI service, a minimal React/Vite app, local service definitions, and a CI workflow. There are no product features, database migrations, authentication, Sentinel, or deployment configuration yet.
