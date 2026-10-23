@@ -1,5 +1,7 @@
 name: vistaro
 
+# Local development only. INFRA-001 pins exact image tags/digests and verifies
+# the compose file with Docker; Docker was not available during REPO-001.
 services:
   postgres:
     image: postgres:16-alpine

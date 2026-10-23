@@ -42,7 +42,8 @@ Check it:
 curl http://127.0.0.1:8000/healthz
 ```
 
-Expected: `{"status":"ok","environment":"local"}`.
+Expected: `{"status":"ok","environment":"local"}`. On PowerShell, use
+`Invoke-RestMethod http://127.0.0.1:8000/healthz` instead of `curl`.
 
 ### 2. Web
 
@@ -94,9 +95,10 @@ infra/docker-compose.yml   local Postgres, Redis, Mailpit
 ## Environment variables
 
 Copy `.env.example` to `.env`; it lists names only. Never commit `.env`, keys,
-tokens, or customer data. CI runs a secret scan on the full history.
+tokens, or customer data. CI runs a secret scan.
 
 ## Status
 
-Bootstrap only. See `docs/PROJECT_ROADMAP.md` for the real task status and
-`docs/ACTIVE_TASKS.md` for the current queue.
+Bootstrap only. `REPO-001` is in review: the fresh-clone path above passes
+locally, but CI has not yet run on GitHub. See `docs/PROJECT_ROADMAP.md` for
+the real task status and `docs/ACTIVE_TASKS.md` for the current queue.

@@ -7,26 +7,26 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 ## 1. Authority and honesty
 
 - On 2026-10-18 the founders delegated to Claude the finalization of the architecture, tech stack, and this roadmap. Items finalized under that delegation carry approval flag `DELEGATED`; the founders may change any of them. Items from the founders' own confirmed spec carry `APPROVED-SCOPE`.
-- **No repository was inspected.** Nothing is `DONE` as software. The only `DONE` items are *decisions* recorded in `docs/ARCHITECTURE.md`.
-- Relevant files and components per task are filled in when the task starts and the repository exists (verified paths only). Until then, use the module paths in `ARCHITECTURE.md` §3 as the *intended* locations.
+- `REPO-000` inspected the repository on 2026-10-23 and `REPO-001` created the monorepo bootstrap. The only verified software is that bootstrap; no product feature is `DONE`.
+- Bootstrap paths are verified in `CLAUDE.md` §12. Feature paths are filled in when each task starts; use `docs/ARCHITECTURE.md` §3 as the intended layout.
 
 ## 2. Current stage and status summary
 
 | Item | State |
 |---|---|
-| Stage | Pre-build. Architecture and stack decided; repository not yet created. |
+| Stage | Bootstrap. Monorepo, minimal API/web shell, CI workflow, and local compose file exist; `REPO-001` is in review pending CI on a PR. |
 | Competition | DTU SEVA 2026, Stage 1 (deadline: **unknown**, see ACTIVE_TASKS) |
 | Team | Anushka Varshney (frontend and platform), Dimple (AI and backend) |
-| Stack | Decided (ARCHITECTURE.md ADR-001 to ADR-020), unverified in practice |
+| Stack | Bootstrap toolchain verified (FastAPI, React/Vite, uv, pnpm); database, Redis, workers, hosting, and integrations unverified |
 | First niche, pricing, tagline | Undecided |
 
 | Category | Items |
 |---|---|
-| 1. Completed and verified | Decisions only: `DEC-001`, `DEC-003`, `DEC-004` |
-| 2. Implemented but not fully verified | None known (repository not inspected) |
+| 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000` |
+| 2. Implemented but not fully verified | `REPO-001` (fresh clone passes; CI on a PR pending) |
 | 3. In progress | None |
-| 4. Ready to implement | `REPO-000`, `REPO-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
-| 5. Blocked | `VAL-002`; all other Phase 1 build tasks wait on predecessors (see dependencies); `CLA-003` waits on `RES-001` |
+| 4. Ready to implement | `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
+| 5. Blocked | `DB-001`, `INFRA-001`, `API-001` and the rest of Phase 1 until `REPO-001` is `DONE`; `VAL-002`; `CLA-003` waits on `RES-001` |
 | 6. Planned for later | Phases 2 to 5 |
 | 7. Still undecided | First niche, pricing, tagline, embeddings provider (`DEC-005`), LLM model names (`DEC-002` evaluation), name clearance |
 
@@ -88,7 +88,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 | ID | Objective and value | Depends on | Acceptance criteria | Required tests | Pri | Status | Approval |
 |---|---|---|---|---|---|---|---|
-| REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | REPO-000, DEC-001 | Fresh clone runs both apps from README; CI runs on a PR; no secrets in history | Fresh-clone test; secret scan | P0 | READY | DELEGATED |
+| REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | REPO-000, DEC-001 | Fresh clone runs both apps from README; CI runs on a PR; no secrets in history | Fresh-clone test; secret scan | P0 | IN_REVIEW (fresh clone verified 2026-10-23; CI workflow added but not yet run on GitHub) | DELEGATED |
 | INFRA-001 | Local docker-compose; staging on Render and Cloudflare Pages; secrets configured; **verify** plan, region, `pgvector` availability | REPO-001 | Staging reachable; secrets only in platform store; findings recorded | Smoke test; secret scan | P0 | BLOCKED | DELEGATED |
 | DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | BLOCKED | DELEGATED |
 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | BLOCKED | DELEGATED |
@@ -216,9 +216,9 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 ## 15. Next recommended action
 
-1. Create the repository and CI (`REPO-000`, `REPO-001`).
+1. Review branch `repo-001-bootstrap`, push it, and open a PR to run CI and the secret scan; mark `REPO-001` `DONE` only when that PR is green.
 2. In parallel, start owner interviews (`VAL-001`) and confirm module names with the report (`DOC-001`).
-3. Then `DB-001` and the tenancy test (`TEST-001`) before any feature code.
+3. Then `DB-001` and `INFRA-001` in parallel, followed by the tenancy test (`TEST-001`), before any feature code.
 
 ## 16. Change log
 
@@ -226,3 +226,4 @@ One complete loop, all steps real (test accounts allowed where stated):
 |---|---|---|
 | 2026-10-17 | Initial roadmap | AI-generated |
 | 2026-10-18 | Finalized under founders' delegation: stack and architecture decided; DEC-001, DEC-003, DEC-004 done; full task breakdown for phases 1 to 5; approval flags updated | Claude (delegated) |
+| 2026-10-23 | `REPO-001`: created the monorepo bootstrap, moved reference docs into `docs/`, added CI and compose files, and verified a fresh clone; task is `IN_REVIEW` pending CI on a PR | Claude (delegated) |

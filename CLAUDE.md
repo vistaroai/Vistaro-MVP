@@ -30,7 +30,7 @@ If the repository uses `AGENTS.md` for shared agent instructions, keep it as a t
 
 ### Status of the project at the time this file was written (verify before trusting)
 
-- Vistaro is at the **pre-build stage**. At creation time **no repository, code, tests, or deployment were visible** to the author of this file. Every statement about implementation in these docs is therefore **UNVERIFIED** until you inspect the repository.
+- Vistaro is at the **bootstrap stage**. `REPO-001` (2026-10-23) created the monorepo, minimal API and web shells, local compose file, CI workflow, and verified commands (see §12). No product feature is implemented; feature statements remain targets until their tasks are verified.
 - No software feature is `DONE`. The architecture and technology stack are **decided** (see `docs/ARCHITECTURE.md`, finalized 2026-10-18 under the founders' delegation; the founders may change them through the process in §9). Pricing, first customer niche, tagline, and exact LLM model names are **still undecided**.
 - If the repository now contains code, **the repository is the evidence of what exists**. Update the roadmap to match it (see §12).
 
@@ -272,60 +272,59 @@ If the repository already contains code or documentation that the roadmap does n
 4. Record real commands in a "Verified commands" section below.
 5. Ask the founders to confirm anything that looks like an unapproved architectural choice.
 
-### Verified repository state (REPO-000, inspected 2026-10-23)
+### Verified repository state (REPO-001, 2026-10-23)
 
 **Location:** `C:\Users\Anushka\OneDrive\Desktop\vistaromvp`
 **Remote:** `origin` = `https://github.com/vistaroai/Vistaro-MVP.git`
-**Branch:** `main`; 3 commits; latest `1d48628` "New documentation added" (2026-10-23).
-**Working tree:** not clean. Six documents are modified and `TASK_PLAYBOOK.md` is new and untracked. These are pre-existing documentation changes; REPO-000 did not create, revert, or discard them.
+**Branch:** `repo-001-bootstrap`, created from `main`; commit `4de4a31` "REPO-001: bootstrap monorepo". Local only; not pushed.
+**Working tree:** clean at the tested commit. The bootstrap was re-tested from a fresh clone at `C:\Users\Anushka\AppData\Local\Temp\opencode\vistaro-repo001-clone`.
 
-**Structure:** documentation-only repository. There are no application directories, source files, tests, CI workflows, package manifests, lockfiles, database migrations, Docker files, or environment templates. All files are at the repository root; the only directory is `.git`.
+**Structure:** monorepo bootstrap. The repository now contains a minimal FastAPI service, a minimal React/Vite app, local service definitions, and a CI workflow. There are no product features, database migrations, authentication, Sentinel, or deployment configuration yet.
 
-| Path | Git state | Role |
-|---|---|---|
-| `ACTIVE_TASKS.md` | tracked | task queue and full sequence |
-| `AGENTS.md` | tracked | pointer to `CLAUDE.md` |
-| `ARCHITECTURE.md` | tracked | architecture |
-| `CLAUDE.md` | tracked | rules and workflow |
-| `DEVELOPMENT_GUIDE.md` | tracked | build guide |
-| `PROJECT_ROADMAP.md` | tracked | roadmap and status |
-| `PROJECT_WARNINGS.md` | tracked | warnings register |
-| `STARTUP_AI_MASTER_CONTEXT.md` | tracked | product context |
-| `STARTUP_MASTER_BLUEPRINT.md` | tracked | business context |
-| `Vistaro.docx` | tracked | binary source document |
-| `TASK_PLAYBOOK.md` | untracked | per-task instructions |
-
-**Note:** the documents refer to `/docs/*.md` and `docs/adr/`, but every markdown file is at the repository root and no `docs/` directory exists. `ARCHITECTURE.md` §3 also expects `apps/api`, `apps/web`, `infra`, and `.github/workflows`; none exist. See WARN-G-009.
-
-**Commands:** no install, run, test, lint, type-check, build, or migrate command exists, so none could be verified. The target stack commands in `DEVELOPMENT_GUIDE.md` §2 and §3.3 remain unverified targets and are deliberately not recorded as working commands.
-
-| Purpose | Command | Verified on | Result |
-|---|---|---|---|
-| Install | — | 2026-10-23 | No package manifest, lockfile, or install command exists |
-| Run dev | — | 2026-10-23 | No application entry point exists |
-| Test | — | 2026-10-23 | No tests or test runner exist |
-| Lint | — | 2026-10-23 | No linter exists |
-| Type-check | — | 2026-10-23 | No type checker exists |
-| Build | — | 2026-10-23 | No build system exists |
-| Migrate DB | — | 2026-10-23 | No database configuration or migrations exist |
-
-**Commands run successfully during REPO-000:**
-
-| Command | Observed result |
+| Path | Role |
 |---|---|
-| `git status --short --branch` | `main`; 6 modified documents; `TASK_PLAYBOOK.md` untracked |
-| `git remote -v` | `origin` = `https://github.com/vistaroai/Vistaro-MVP.git` |
-| `git branch --show-current` | `main` |
-| `git log --oneline -10` | 3 commits: `1d48628`, `850ff6c`, `455d8b1` |
-| `git ls-files` | 10 tracked files, all at the repository root |
-| `git diff --stat` | 6 modified Markdown documents |
-| `Get-ChildItem -Recurse -Directory` | no directories other than `.git` |
-| `Test-Path` for expected paths | all absent: `README.md`, `.gitignore`, `.editorconfig`, `.env.example`, `package.json`, `pnpm-lock.yaml`, `pyproject.toml`, `uv.lock`, `alembic.ini`, `docker-compose.yml`, `infra`, `apps`, `docs`, `.github` |
-| `python --version` | Python 3.15.1 (stack targets 3.12) |
-| `node --version` | v24.22.1 |
-| `git --version` | 2.56.0.windows.2 |
+| `CLAUDE.md`, `AGENTS.md` | rules and agent pointer |
+| `README.md` | fresh-clone quick start and checks |
+| `STARTUP_*.md`, `Vistaro.docx` | product and business context |
+| `docs/` | architecture, roadmap, active tasks, warnings, playbook |
+| `docs/adr/` | ADR location; contains a format note only |
+| `apps/api/` | `pyproject.toml`, `uv.lock`, `.python-version`, `src/vistaro`, `tests` |
+| `apps/web/` | React 19 + TypeScript + Vite 8, Tailwind 4, Vitest, ESLint, Prettier |
+| `infra/docker-compose.yml` | Postgres 16, Redis 7, Mailpit (unverified) |
+| `.github/workflows/ci.yml` | backend, frontend, and secret-scan jobs (not yet run on GitHub) |
 
-**Environment:** `uv`, `pnpm`, and `docker` are not available on `PATH` (`Get-Command` returned nothing); they may still be installed outside `PATH`.
+**Docs layout:** the repository uses the verified `docs/` paths. The six reference documents moved from the repository root to `docs/`; `CLAUDE.md`, `AGENTS.md`, `README.md`, `STARTUP_*.md`, and `Vistaro.docx` stay at the root. WARN-G-009 is resolved.
+
+**Verified commands** (run on 2026-10-23; from the workspace and repeated in the fresh clone where noted):
+
+| Purpose | Command | Result |
+|---|---|---|
+| Install backend | `cd apps/api` then `uv sync` | Python 3.12.15; 77 packages; fresh clone passed |
+| Run API (dev) | `cd apps/api` then `uv run uvicorn vistaro.main:app --reload --port 8000` | `/healthz` returned 200 `{"status":"ok","environment":"local"}` |
+| Install frontend | `cd apps/web` then `pnpm install --frozen-lockfile` | 279 packages; fresh clone passed |
+| Run web (dev) | `cd apps/web` then `pnpm dev` | `http://localhost:5173` returned 200; title `Vistaro` |
+| Test backend | `cd apps/api` then `uv run pytest -q` | 1 passed; upstream Starlette deprecation warning about `httpx`/`httpx2` |
+| Lint backend | `cd apps/api` then `uv run ruff check .` | All checks passed |
+| Type-check backend | `cd apps/api` then `uv run mypy src` | No issues in 4 source files |
+| Import boundaries | `cd apps/api` then `uv run lint-imports` | 1 contract kept, 0 broken |
+| Lint frontend | `cd apps/web` then `pnpm lint` | Passed |
+| Type-check frontend | `cd apps/web` then `pnpm typecheck` | Passed |
+| Test frontend | `cd apps/web` then `pnpm test` | 1 file, 1 test passed |
+| Build frontend | `cd apps/web` then `pnpm build` | Vite production build passed |
+| Format check | `cd apps/web` then `pnpm format:check` | Passed |
+| Migrate DB | - | No migrations until `DB-001` |
+| Local services | `docker compose -f infra/docker-compose.yml up -d` | Not run; Docker is not installed. `INFRA-001` |
+| CI | `.github/workflows/ci.yml` | Not run on GitHub; must pass on the first PR |
+
+**YAML syntax:** `.github/workflows/ci.yml` and `infra/docker-compose.yml` parse with PyYAML. Parsing does not prove that GitHub Actions or Docker will run them.
+
+**Versions:** Python 3.12.15, uv 0.13.5, Node.js 24.22.1, pnpm 12.15.0, TypeScript 5.9.3, Vite 8.3.5, FastAPI 0.161.1. The system Python is 3.15.1; `apps/api/.python-version` makes uv select 3.12.
+
+**Environment:** uv was installed into the user Python scripts and exposed through `C:\Users\Anushka\AppData\Roaming\npm\uv.cmd`; pnpm 12.15.0 is global. PowerShell blocks `pnpm.ps1`; use `pnpm.cmd` or `Set-ExecutionPolicy -Scope Process Bypass` (documented in `README.md`). Docker is absent.
+
+**Fresh-clone proof:** `git clone --branch repo-001-bootstrap` at `4de4a31`, then the README steps: copied `.env.example` to `.env`, `uv sync`, started the API, and got the health JSON above; ran `pnpm install --frozen-lockfile`, `pnpm dev`, and got HTTP 200. Both check suites passed in the clone.
+
+**Not verified:** CI on GitHub (no push/PR), Docker Compose (Docker absent), staging (`INFRA-001`), database migrations (`DB-001`), and all product features.
 
 ---
 
