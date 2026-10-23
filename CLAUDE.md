@@ -14,7 +14,8 @@ It does not describe the whole product. Product knowledge lives in the files bel
 |---|---|---|
 | `CLAUDE.md` | Rules and mandatory workflow | `/CLAUDE.md` |
 | `docs/PROJECT_ROADMAP.md` | Complete phased roadmap, all tasks | `/docs/PROJECT_ROADMAP.md` |
-| `docs/ACTIVE_TASKS.md` | Current execution queue | `/docs/ACTIVE_TASKS.md` |
+| `docs/ACTIVE_TASKS.md` | Current queue plus the full ordered task sequence (no statuses) | `/docs/ACTIVE_TASKS.md` |
+| `docs/TASK_PLAYBOOK.md` | Step-by-step instructions, checks and prompts for every task | `/docs/TASK_PLAYBOOK.md` |
 | `docs/PROJECT_WARNINGS.md` | Warnings, risks, known bugs, technical debt | `/docs/PROJECT_WARNINGS.md` |
 | `docs/ARCHITECTURE.md` | **Final** architecture, tech stack, ADR register, data model | `/docs/ARCHITECTURE.md` |
 | `docs/DEVELOPMENT_GUIDE.md` | Step-by-step build guide, conventions, patterns, release and ops | `/docs/DEVELOPMENT_GUIDE.md` |
@@ -58,7 +59,7 @@ Determine, with evidence (file paths, command output):
 **Never overwrite, reset, discard, stash-drop, or revert existing changes without explicit permission.**
 
 ### Step 3: Select the correct task
-1. Read `docs/ACTIVE_TASKS.md`, then the relevant entries in `docs/PROJECT_ROADMAP.md`.
+1. Read `docs/ACTIVE_TASKS.md`, then the task's entry in `docs/PROJECT_ROADMAP.md` (status and acceptance criteria) and its instructions in `docs/TASK_PLAYBOOK.md`. Task **status lives only in the roadmap**.
 2. Check dependencies, priority, blockers, acceptance criteria.
 3. Choose the highest-priority **READY** task appropriate to the request.
 4. If the user asks for a different task, do that task, unless it conflicts with a critical safety rule or a documented dependency. If it does, explain and propose a safe path.
@@ -262,28 +263,69 @@ Be truthful. Do not say "all tests pass" if only a subset ran. Say what you did 
 
 ---
 
-## 12. First session in a repository that already has code
+## 12. First session in an existing repository
 
-If code exists and the roadmap says otherwise:
+If the repository already contains code or documentation that the roadmap does not reflect:
 1. Inspect the repository (§1 Step 1 and 2).
 2. Record what exists in `docs/PROJECT_ROADMAP.md`, using status `IN_REVIEW` (implemented but not verified) rather than `DONE` until acceptance criteria are checked.
 3. Replace the "no repository inspected" notes in these docs with verified facts.
 4. Record real commands in a "Verified commands" section below.
 5. Ask the founders to confirm anything that looks like an unapproved architectural choice.
 
-### Verified commands (fill in only after discovery; do not guess)
+### Verified repository state (REPO-000, inspected 2026-10-23)
 
-Target commands for the chosen stack are listed in `docs/DEVELOPMENT_GUIDE.md` §2 and §3.3. They are **unverified targets**: run them, and record the result here only if they actually work.
+**Location:** `C:\Users\Anushka\OneDrive\Desktop\vistaromvp`
+**Remote:** `origin` = `https://github.com/vistaroai/Vistaro-MVP.git`
+**Branch:** `main`; 3 commits; latest `1d48628` "New documentation added" (2026-10-23).
+**Working tree:** not clean. Six documents are modified and `TASK_PLAYBOOK.md` is new and untracked. These are pre-existing documentation changes; REPO-000 did not create, revert, or discard them.
 
-| Purpose | Command | Verified on | Notes |
+**Structure:** documentation-only repository. There are no application directories, source files, tests, CI workflows, package manifests, lockfiles, database migrations, Docker files, or environment templates. All files are at the repository root; the only directory is `.git`.
+
+| Path | Git state | Role |
+|---|---|---|
+| `ACTIVE_TASKS.md` | tracked | task queue and full sequence |
+| `AGENTS.md` | tracked | pointer to `CLAUDE.md` |
+| `ARCHITECTURE.md` | tracked | architecture |
+| `CLAUDE.md` | tracked | rules and workflow |
+| `DEVELOPMENT_GUIDE.md` | tracked | build guide |
+| `PROJECT_ROADMAP.md` | tracked | roadmap and status |
+| `PROJECT_WARNINGS.md` | tracked | warnings register |
+| `STARTUP_AI_MASTER_CONTEXT.md` | tracked | product context |
+| `STARTUP_MASTER_BLUEPRINT.md` | tracked | business context |
+| `Vistaro.docx` | tracked | binary source document |
+| `TASK_PLAYBOOK.md` | untracked | per-task instructions |
+
+**Note:** the documents refer to `/docs/*.md` and `docs/adr/`, but every markdown file is at the repository root and no `docs/` directory exists. `ARCHITECTURE.md` §3 also expects `apps/api`, `apps/web`, `infra`, and `.github/workflows`; none exist. See WARN-G-009.
+
+**Commands:** no install, run, test, lint, type-check, build, or migrate command exists, so none could be verified. The target stack commands in `DEVELOPMENT_GUIDE.md` §2 and §3.3 remain unverified targets and are deliberately not recorded as working commands.
+
+| Purpose | Command | Verified on | Result |
 |---|---|---|---|
-| Install | UNKNOWN | | |
-| Run dev | UNKNOWN | | |
-| Test | UNKNOWN | | |
-| Lint | UNKNOWN | | |
-| Type-check | UNKNOWN | | |
-| Build | UNKNOWN | | |
-| Migrate DB | UNKNOWN | | |
+| Install | — | 2026-10-23 | No package manifest, lockfile, or install command exists |
+| Run dev | — | 2026-10-23 | No application entry point exists |
+| Test | — | 2026-10-23 | No tests or test runner exist |
+| Lint | — | 2026-10-23 | No linter exists |
+| Type-check | — | 2026-10-23 | No type checker exists |
+| Build | — | 2026-10-23 | No build system exists |
+| Migrate DB | — | 2026-10-23 | No database configuration or migrations exist |
+
+**Commands run successfully during REPO-000:**
+
+| Command | Observed result |
+|---|---|
+| `git status --short --branch` | `main`; 6 modified documents; `TASK_PLAYBOOK.md` untracked |
+| `git remote -v` | `origin` = `https://github.com/vistaroai/Vistaro-MVP.git` |
+| `git branch --show-current` | `main` |
+| `git log --oneline -10` | 3 commits: `1d48628`, `850ff6c`, `455d8b1` |
+| `git ls-files` | 10 tracked files, all at the repository root |
+| `git diff --stat` | 6 modified Markdown documents |
+| `Get-ChildItem -Recurse -Directory` | no directories other than `.git` |
+| `Test-Path` for expected paths | all absent: `README.md`, `.gitignore`, `.editorconfig`, `.env.example`, `package.json`, `pnpm-lock.yaml`, `pyproject.toml`, `uv.lock`, `alembic.ini`, `docker-compose.yml`, `infra`, `apps`, `docs`, `.github` |
+| `python --version` | Python 3.15.1 (stack targets 3.12) |
+| `node --version` | v24.22.1 |
+| `git --version` | 2.56.0.windows.2 |
+
+**Environment:** `uv`, `pnpm`, and `docker` are not available on `PATH` (`Get-Command` returned nothing); they may still be installed outside `PATH`.
 
 ---
 

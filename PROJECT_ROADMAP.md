@@ -1,7 +1,7 @@
 # PROJECT ROADMAP — Vistaro (FINAL, whole roadmap)
 
 Version 2.0 · 2026-10-18. Supersedes the 2026-10-17 draft.
-Rules: `/CLAUDE.md`. Current queue: `/docs/ACTIVE_TASKS.md`. Risks: `/docs/PROJECT_WARNINGS.md`.
+Rules: `/CLAUDE.md`. Current queue and ordered sequence: `/docs/ACTIVE_TASKS.md`. Instructions per task: `/docs/TASK_PLAYBOOK.md`. Risks: `/docs/PROJECT_WARNINGS.md`. **This file is the single source of truth for task status.**
 Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Product context: `STARTUP_AI_MASTER_CONTEXT.md`.
 
 ## 1. Authority and honesty
@@ -66,7 +66,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 | ID | Objective and value | Depends on | Acceptance criteria | Required tests / verification | Pri | Status | Approval |
 |---|---|---|---|---|---|---|---|
-| REPO-000 | Find and inspect the real repository if any; record structure and verified commands in `CLAUDE.md` §12 | none | Location, branch, tree, commands recorded, or "none exists" recorded | Commands actually run | P0 | READY | DELEGATED |
+| REPO-000 | Find and inspect the real repository if any; record structure and verified commands in `CLAUDE.md` §12 | none | Location, branch, tree, commands recorded, or "none exists" recorded | Commands actually run | P0 | DONE (inspected 2026-10-23: docs-only repository; no application code or runnable app commands; state recorded in `CLAUDE.md` §12) | DELEGATED |
 | DOC-001 | Founders confirm old-to-new module name mapping; share full *Product Features & Functional Responsibilities Report*; reconcile docs | founders | Mapping confirmed in writing; master docs diffed against report | Founder review | P0 | READY | DELEGATED |
 | VAL-001 | Interview real owners with a written script; capture quotes and numbers | none | Interview count set beforehand and met; notes stored; pains ranked from evidence | Coverage vs script | P0 | READY | DELEGATED |
 | VAL-002 | Choose first niche | VAL-001 | Niche recorded in decision log | Founder sign-off | P0 | BLOCKED | DELEGATED |

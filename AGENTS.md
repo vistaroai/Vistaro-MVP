@@ -4,8 +4,8 @@ This file exists for tools that read `AGENTS.md`. **The rules live in `/CLAUDE.m
 
 Reading order:
 1. `/CLAUDE.md` (mandatory workflow and rules)
-2. `/docs/ACTIVE_TASKS.md` (what to do now)
-3. `/docs/PROJECT_ROADMAP.md` (full plan and acceptance criteria)
+2. `/docs/ACTIVE_TASKS.md` (what to do now, and the full ordered task list)
+3. `/docs/PROJECT_ROADMAP.md` (status and acceptance criteria) and `/docs/TASK_PLAYBOOK.md` (how to do each task)
 4. `/docs/PROJECT_WARNINGS.md` (check before changing a component)
 5. `/docs/ARCHITECTURE.md` (final design) and `/docs/DEVELOPMENT_GUIDE.md` (how to build)
 6. `/STARTUP_AI_MASTER_CONTEXT.md` and `/STARTUP_MASTER_BLUEPRINT.md` (product context)

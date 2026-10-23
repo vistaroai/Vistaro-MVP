@@ -1,7 +1,7 @@
 # DEVELOPMENT GUIDE — Vistaro
 
 Version 1.0 · 2026-10-18 · The practical "how to build it" companion to `/docs/ARCHITECTURE.md`.
-Rules: `/CLAUDE.md`. Task list: `/docs/PROJECT_ROADMAP.md`. Queue: `/docs/ACTIVE_TASKS.md`.
+Rules: `/CLAUDE.md`. Task list: `/docs/PROJECT_ROADMAP.md`. Queue: `/docs/ACTIVE_TASKS.md`. Per-task instructions and prompts: `/docs/TASK_PLAYBOOK.md` (this guide holds the patterns and conventions those instructions rely on).
 
 ## 0. How to use this guide
 

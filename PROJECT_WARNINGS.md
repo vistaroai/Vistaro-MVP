@@ -1,6 +1,6 @@
 # PROJECT WARNINGS — Vistaro
 
-Central register of warnings, constraints, known issues and technical debt. Last updated: 2026-10-18.
+Central register of warnings, constraints, known issues and technical debt. Last updated: 2026-10-23.
 Rules: `/CLAUDE.md` §7. Roadmap: `/docs/PROJECT_ROADMAP.md`.
 
 ## How to read this register
@@ -150,7 +150,8 @@ These are real, observed issues in the project record, not hypothetical.
 | WARN-G-005 | LOW | OBSERVED | **Full Product Features report not seen by the authors of the master docs.** Only a summary was available | Master docs | Possible scope mismatch | Compare when available | `DOC-001` | Open | Diff reviewed |
 | WARN-G-006 | LOW | OBSERVED | **Tagline and logo unfinished**; only candidates and a prompt exist | Branding | None for engineering | Do not hardcode a tagline or logo as final | Founders decide | Open | n/a |
 | WARN-G-007 | LOW | OBSERVED | **LLM default was recommended by an Anthropic model** and has not been independently evaluated (disclosed in ARCHITECTURE.md) | AI layer | Possible suboptimal provider choice | Provider-agnostic interface | `DEC-002` evaluation on a fixed task set | Open | Evaluation recorded |
-| WARN-G-008 | MEDIUM | OBSERVED | **Documents were generated without a repository.** Every implementation statement is unverified; commands in the guide are targets | All docs | Docs may not match reality once code exists | Run `REPO-000`; record verified commands | `REPO-000`, `REPO-001` | Open | Verified commands recorded |
+| WARN-G-008 | MEDIUM | OBSERVED | **Documents were generated without a repository.** Every implementation statement is unverified; commands in the guide are targets. `REPO-000` (2026-10-23) confirmed the repository exists but contains documentation only | All docs | Docs may not match reality once code exists | Run `REPO-000`; record verified commands | `REPO-000`, `REPO-001` | Partially addressed: `REPO-000` done; commands remain unverified until `REPO-001` | `REPO-000` state recorded in `CLAUDE.md` §12; `REPO-001` pending |
+| WARN-G-009 | LOW | OBSERVED | **Documentation paths do not match the tree.** Docs link to `/docs/*.md` and `docs/adr/`, but all markdown files are at the repository root and no `docs/` directory exists. Evidence: `git ls-files` on 2026-10-23 | All docs links; `REPO-001` layout | Broken references and confusion | Use actual root paths when reading now | Move docs into `docs/` during `REPO-001`, or update every link to the root paths | Open | Links resolve after `REPO-001` |
 
 ---
 
@@ -160,3 +161,4 @@ These are real, observed issues in the project record, not hypothetical.
 |---|---|
 | 2026-10-17 | Initial register created. No code defects recorded because no repository was inspected. Preventive controls clearly labeled. |
 | 2026-10-18 | Updated for the decided stack: resolved or mitigated stack-related entries; added WARN-B-009 to B-012, C-009 to C-011, D-007, D-008, F-007, F-008, G-007, G-008. |
+| 2026-10-23 | `REPO-000`: recorded the docs-only repository state; updated WARN-G-008 to partially addressed; added WARN-G-009 (docs paths versus actual root layout). |
