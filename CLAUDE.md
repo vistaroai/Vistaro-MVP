@@ -1,7 +1,7 @@
 # CLAUDE.md — Vistaro AI Development Control File
 
 > Mandatory instructions for every AI coding agent working on **Vistaro**.
-> Read this file completely before touching any code. Last updated: 2026-10-22 (stack finalized: free and open source only).
+> Read this file completely before touching any code. Last updated: 2026-10-18.
 
 ## 0. What this file is (and is not)
 
@@ -13,12 +13,11 @@ It does not describe the whole product. Product knowledge lives in the files bel
 | File | Role | Path |
 |---|---|---|
 | `CLAUDE.md` | Rules and mandatory workflow | `/CLAUDE.md` |
-| `docs/ARCHITECTURE.md` | **Authority for the tech stack, structure, licence policy and design (v1.1, final)** | `/docs/ARCHITECTURE.md` |
-| `docs/DEVELOPMENT_GUIDE.md` | Build how-to (setup and workflow) | `/docs/DEVELOPMENT_GUIDE.md` |
-| `docs/adr/` | One file per approved change to an architecture decision | `/docs/adr/` |
 | `docs/PROJECT_ROADMAP.md` | Complete phased roadmap, all tasks | `/docs/PROJECT_ROADMAP.md` |
 | `docs/ACTIVE_TASKS.md` | Current execution queue | `/docs/ACTIVE_TASKS.md` |
 | `docs/PROJECT_WARNINGS.md` | Warnings, risks, known bugs, technical debt | `/docs/PROJECT_WARNINGS.md` |
+| `docs/ARCHITECTURE.md` | **Final** architecture, tech stack, ADR register, data model | `/docs/ARCHITECTURE.md` |
+| `docs/DEVELOPMENT_GUIDE.md` | Step-by-step build guide, conventions, patterns, release and ops | `/docs/DEVELOPMENT_GUIDE.md` |
 | `STARTUP_AI_MASTER_CONTEXT.md` | Full AI-oriented product and technical knowledge | repo root (intended path) |
 | `STARTUP_MASTER_BLUEPRINT.md` | Human-oriented business and engineering rationale | repo root (intended path) |
 
@@ -30,8 +29,8 @@ If the repository uses `AGENTS.md` for shared agent instructions, keep it as a t
 
 ### Status of the project at the time this file was written (verify before trusting)
 
-- Vistaro is at the **idea / pre-build stage**. At creation time **no repository, code, tests, or deployment were visible** to the author of this file. Every statement about implementation in these docs is therefore **UNVERIFIED** until you inspect the repository.
-- No feature is marked `DONE`. **The technology stack and hosting are decided** (`docs/ARCHITECTURE.md` v1.1, `DEC-001` done): everything Vistaro runs must be **free and open source**. Still open: which open-weight LLM (`DEC-002`), VM provider and domain (`DEC-005`), backup destination (`DEC-006`), pricing and first customer niche.
+- Vistaro is at the **pre-build stage**. At creation time **no repository, code, tests, or deployment were visible** to the author of this file. Every statement about implementation in these docs is therefore **UNVERIFIED** until you inspect the repository.
+- No software feature is `DONE`. The architecture and technology stack are **decided** (see `docs/ARCHITECTURE.md`, finalized 2026-10-18 under the founders' delegation; the founders may change them through the process in §9). Pricing, first customer niche, tagline, and exact LLM model names are **still undecided**.
 - If the repository now contains code, **the repository is the evidence of what exists**. Update the roadmap to match it (see §12).
 
 ---
@@ -42,7 +41,7 @@ Run this sequence at the start of every session. Keep it proportional: for a one
 
 ### Step 1: Understand the project
 1. Read this file.
-2. Read `docs/ARCHITECTURE.md` (stack, structure, licence policy), then `STARTUP_AI_MASTER_CONTEXT.md` (product, decisions, constraints, open questions). If the master document's stack suggestion differs from `ARCHITECTURE.md`, `ARCHITECTURE.md` wins.
+2. Read `STARTUP_AI_MASTER_CONTEXT.md` (product, decisions, constraints, open questions), then `docs/ARCHITECTURE.md` (final design) and the relevant part of `docs/DEVELOPMENT_GUIDE.md`.
 3. Consult `STARTUP_MASTER_BLUEPRINT.md` for rationale when needed.
 4. If either master document is missing, say so and use only verified information. Do not reconstruct their content from memory.
 5. Inspect the real repository: directory structure, configuration, dependency files, scripts, existing implementation, tests, CI.
@@ -71,7 +70,7 @@ State briefly: objective; affected files and components; approach; dependencies,
 
 ### Step 5: Implement safely
 - Follow existing architecture and conventions. Reuse existing components and patterns.
-- No duplicate functionality, no unnecessary dependencies. **Check the licence of every new dependency, image and model against rule 19 before adding it.**
+- No duplicate functionality, no unnecessary dependencies.
 - Do not silently swap the stack. Do not ship placeholders as complete.
 - Do not hardcode secrets. Do not weaken auth, authorization, validation, or tenant isolation to make something work.
 - Keep changes focused. No unrelated refactoring.
@@ -102,8 +101,7 @@ Update the task tracker and roadmap, implementation status and known limitations
   - Each module owns its domain data and workflows; access other modules' data through their interfaces.
   - Sentinel enforces permissions and approvals across the ecosystem.
   - Never fabricate market data, customers, metrics, or progress.
-  - **Free and open source only (founder instruction, 2026-10-22).** Everything Vistaro runs or links into its code must be free and open source (policy: `ARCHITECTURE.md` §0). Free-to-use external services (Google sign-in, Meta, Razorpay, an SMTP relay, GitHub) are allowed only as optional or replaceable integrations.
-- **Stack in one line (authority: `ARCHITECTURE.md`):** modular monolith; Python/FastAPI backend; React/TypeScript/Vite frontend; PostgreSQL with RLS and pgvector; Celery + Valkey; self-hosted open-weight LLM behind an OpenAI-compatible interface (Ollama, later vLLM); Docker Compose on a free VM behind Caddy; GlitchTip, Uptime Kuma, restic, SOPS + age.
+- **Stack (final, see `docs/ARCHITECTURE.md`):** modular monolith in a monorepo; Python 3.12 + FastAPI + SQLAlchemy + Alembic; React + TypeScript + Vite + Tailwind; PostgreSQL only (RLS for tenancy); Celery + Redis; own session auth; Sentinel in-process; custom planner-executor orchestration; provider-agnostic LLM layer (Anthropic default); Cloudflare Pages + Render + R2; GitHub Actions.
 - **Team (2 people):** Anushka Varshney (frontend and platform lead), Dimple (AI and backend lead).
 - **Working style:** the founder prefers to validate her own code over receiving wholesale replacement solutions. Prefer small, focused diffs with a clear explanation and tests. Offer to explain changes. Do not rewrite large working areas unprompted.
 
@@ -131,10 +129,9 @@ Update the task tracker and roadmap, implementation status and known limitations
 15. **Customer-supplied text is untrusted data.** Never let inbound messages act as instructions to an agent. Restrict tools in reply-handling paths.
 16. **No invented facts in AI outputs.** Support and customer-facing agents answer only from store data and escalate when ungrounded.
 17. **Do not claim AI-visibility results you cannot obtain.** Access to AI-platform answers is unverified (warning WARN-C-001). Do not scrape or call platforms in ways that violate their terms; do not simulate results as real.
-18. **Secrets:** use SOPS-encrypted files or restricted environment files; never commit plaintext secrets or the age private key. Provide `.env.example` with placeholder names only.
-19. **Free and open source only.** Do not add a dependency, container image, model, font or service whose licence is not on the allow-list in `ARCHITECTURE.md` §0 (no source-available or non-commercial licences; GPL/AGPL only for standalone services we run unmodified). The CI licence check must pass. If something good seems to need an exception, stop and propose an ADR; do not add it.
-20. **Self-hosted LLM honesty.** When the LLM server is slow, down or returns invalid output, the step retries within its cap and then fails visibly. Never return canned, mocked or invented output in its place. Do not expose the LLM server, database or Valkey to the internet.
-21. **Backups before risk.** Take and verify a backup before any production migration or destructive operation. We host the data ourselves; there is no provider safety net.
+18. **Secrets:** use environment variables or a secret manager. Provide `.env.example` with placeholder names only.
+19. **Follow the module boundaries.** Cross-module imports go through `service.py` only; `import-linter` must pass. Only repositories contain SQL. The application connects as a non-owner database role without `BYPASSRLS`; never use a privileged role in application code.
+20. **Follow the ADRs.** Do not add an agent framework, a second database, or a different auth or queue system without the §9 process.
 
 ---
 
@@ -171,7 +168,7 @@ Apply the items relevant to the feature; skip those that do not apply.
 | `P2` | Important, follows the MVP loop. |
 | `P3` | Nice to have or later phase. |
 
-**Approval flag in the roadmap:** `APPROVED-SCOPE` means the capability is part of the founders' confirmed spec. `PROPOSED-TASK` means the specific task breakdown was drafted by an AI and has **not** been approved. Do not treat a proposed task as approved scope without the founders' acceptance.
+**Approval flag in the roadmap:** `APPROVED-SCOPE` means the capability is part of the founders' confirmed spec. `DELEGATED` means the item was finalized by Claude under the founders' explicit delegation on 2026-10-18; it is binding for planning unless the founders change it. Any new task you add yourself must be flagged `PROPOSED-TASK` (not approved) until the founders accept it.
 
 ---
 
@@ -179,7 +176,7 @@ Apply the items relevant to the feature; skip those that do not apply.
 
 1. Explicit, current instructions from the user for the current task (subject to safety rules).
 2. Actual repository state, for what has been implemented.
-3. Approved architecture decisions (`docs/ARCHITECTURE.md` and `docs/adr/`) and current product requirements.
+3. Approved architecture decisions and current product requirements.
 4. The current roadmap and active task tracker.
 5. The master startup documents.
 6. Older notes, proposals, and historical ideas.
@@ -211,9 +208,7 @@ Discover real commands from `package.json` scripts, `pyproject.toml`, `Makefile`
 - Application startup; frontend build and lint; backend startup and tests.
 - Database connectivity and schema compatibility.
 - API health and integration behavior.
-- LLM server reachability and model loaded (internal network only), latency on a small fixed prompt.
-- Backups: last successful backup time and last restore test.
-- Licence check result.
+- LLM provider connectivity (without exposing keys or incurring large cost).
 - Background jobs and scheduled tasks.
 - Authentication and authorization behavior.
 - Error logs and known warnings.
@@ -227,20 +222,12 @@ Report a concise health summary that separates **verified findings** from **chec
 
 Needs a written proposal **before** implementation: switching databases; replacing the frontend or backend framework; changing the auth strategy; adopting a major AI orchestration framework; changing a core API contract; reorganizing major modules; adding expensive infrastructure; changing how sensitive data is stored or processed.
 
-The proposal states: current design; proposed change; why necessary; alternatives considered; migration and compatibility risks; implementation and test plan. After approval, add a file under `docs/adr/` and update `docs/ARCHITECTURE.md`. Any change that introduces a component outside the licence allow-list (rule 19) also needs this process.
+The proposal states: current design; proposed change; why necessary; alternatives considered; migration and compatibility risks; implementation and test plan. After approval, record it in the decision log (in `STARTUP_AI_MASTER_CONTEXT.md` §2.6 until a dedicated ADR folder exists).
 Small internal refactors do not need this process. Keep it proportional to risk.
 
-**Decided (do not re-open without an ADR):** the stack in `docs/ARCHITECTURE.md` v1.1, summarized in §2. Decision `DEC-001` is recorded as done in the roadmap (Dimple signed off on 2026-10-22; Anushka Varshney's acknowledgment is pending, and either founder may veto).
+**Decided (do not change without this process):** everything in the ADR register in `docs/ARCHITECTURE.md` (ADR-001 to ADR-020), including the stack, tenancy model, auth approach, job system, orchestration approach, hosting, and CI/CD.
 
-**Still open (propose, do not assume):**
-
-| Item | Task | Note |
-|---|---|---|
-| Which open-weight model(s) and quantization | `DEC-002` | Evaluate on a fixed task set; check the model's licence |
-| VM provider, region, domain | `DEC-005` | Oracle Cloud Always Free is the candidate; verify terms |
-| Off-VM backup destination | `DEC-006` | Must not be the same VM |
-| Embedding model | Phase 3 | ADR-020 |
-| Razorpay and WhatsApp use | Phase 2 / 4 | Not free to use; may be dropped under the free-only rule |
+**Still open (propose, do not assume):** exact LLM model names (`DEC-002`, needs evaluation), embeddings provider (`DEC-005`, Phase 3), payment gateway details beyond the Razorpay plan (`MKT-003`, verify), and anything marked **verify** in the architecture or guide. New architecture decisions are recorded as files under `docs/adr/`.
 
 ---
 
@@ -286,7 +273,7 @@ If code exists and the roadmap says otherwise:
 
 ### Verified commands (fill in only after discovery; do not guess)
 
-Intended tooling from `ARCHITECTURE.md` (**not verified**; discover the real commands once the repository exists): `uv`, Ruff, mypy, pytest, Alembic on the backend; Vite, Vitest, Playwright on the frontend; `docker compose` for local and deployed stacks; `import-linter` and the licence check in CI.
+Target commands for the chosen stack are listed in `docs/DEVELOPMENT_GUIDE.md` §2 and §3.3. They are **unverified targets**: run them, and record the result here only if they actually work.
 
 | Purpose | Command | Verified on | Notes |
 |---|---|---|---|
