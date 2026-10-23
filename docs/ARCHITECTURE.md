@@ -3,7 +3,7 @@
 Version 1.0 · 2026-10-18 · Authority: **decided by delegated authority** (the founders asked Claude on 2026-10-18 to finalize architecture and tech stack; they may veto or change any item).
 Rules: `/CLAUDE.md`. Roadmap: `/docs/PROJECT_ROADMAP.md`. Build how-to: `/docs/DEVELOPMENT_GUIDE.md`. Product context: `STARTUP_AI_MASTER_CONTEXT.md`.
 
-**Honesty note.** This is a *design*. No code exists or was inspected. Every "verify" item below must be checked when the relevant task starts (provider offerings, prices, versions and policies change). Library and model versions are intentionally not pinned here: pin exact versions in lockfiles at install time, and prefer releases at least two weeks old.
+**Honesty note.** This is a *design*. `REPO-001` (2026-10-23) created a minimal FastAPI and React/Vite bootstrap, but no product feature is implemented. Every "verify" item below must be checked when the relevant task starts (provider offerings, prices, versions and policies change). Library and model versions are intentionally not pinned here: pin exact versions in lockfiles at install time, and prefer releases at least two weeks old.
 
 **Disclosure.** The LLM recommendation (ADR-010) names Anthropic models. The author of this document is an Anthropic model, so weigh that choice accordingly. The provider interface (ADR-010) keeps the choice cheap to reverse, and `DEC-002` evaluates it before commitment.
 

@@ -5,7 +5,7 @@ Rules: `/CLAUDE.md`. Task list: `/docs/PROJECT_ROADMAP.md`. Queue: `/docs/ACTIVE
 
 ## 0. How to use this guide
 
-- **Everything here is a plan, not verified code.** No repository existed when this was written. Commands are the *target* commands for the chosen stack. After you create the repo, run each one and record the result in `CLAUDE.md` §12 ("Verified commands"). Until then treat them as unverified.
+- **Everything here is a plan, not verified code.** `REPO-001` (2026-10-23) created the bootstrap and verified its commands in `CLAUDE.md` §12. Commands for features not yet built remain *target* commands for the chosen stack. Run each one when its task starts and record the result in §12.
 - **Code sketches are illustrative patterns**, not drop-in code. They show the shape of the solution so you can write and validate your own version. (Founder preference: you validate your own code; AI agents should explain patterns and propose small diffs rather than rewrite large areas.)
 - Versions are not pinned here. Pin exact versions in lockfiles when you install, and prefer releases at least two weeks old.
 - Items marked **Verify** depend on outside providers whose offerings change.
