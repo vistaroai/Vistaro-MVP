@@ -99,6 +99,7 @@ tokens, or customer data. CI runs a secret scan.
 
 ## Status
 
-Bootstrap only. `REPO-001` is in review: the fresh-clone path above passes
-locally, but CI has not yet run on GitHub. See `docs/PROJECT_ROADMAP.md` for
-the real task status and `docs/ACTIVE_TASKS.md` for the current queue.
+Bootstrap complete. `REPO-001` was merged through PR #1 on 2026-10-23, and CI
+passed on that PR. Docker Compose is still not verified because Docker is not
+installed locally. See `docs/PROJECT_ROADMAP.md` for the real task status and
+`docs/ACTIVE_TASKS.md` for the current queue.

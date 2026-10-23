@@ -30,7 +30,7 @@ If the repository uses `AGENTS.md` for shared agent instructions, keep it as a t
 
 ### Status of the project at the time this file was written (verify before trusting)
 
-- Vistaro is at the **bootstrap stage**. `REPO-001` (2026-10-23) created the monorepo, minimal API and web shells, local compose file, CI workflow, and verified commands (see §12). No product feature is implemented; feature statements remain targets until their tasks are verified.
+- Vistaro is at the **bootstrap-complete stage**. `REPO-001` (2026-10-23) created the monorepo, minimal API and web shells, local compose file, CI workflow, and verified commands (see §12), and was merged into `main` via PR #1. No product feature is implemented; feature statements remain targets until their tasks are verified.
 - No software feature is `DONE`. The architecture and technology stack are **decided** (see `docs/ARCHITECTURE.md`, finalized 2026-10-18 under the founders' delegation; the founders may change them through the process in §9). Pricing, first customer niche, tagline, and exact LLM model names are **still undecided**.
 - If the repository now contains code, **the repository is the evidence of what exists**. Update the roadmap to match it (see §12).
 
@@ -276,7 +276,7 @@ If the repository already contains code or documentation that the roadmap does n
 
 **Location:** `C:\Users\Anushka\OneDrive\Desktop\vistaromvp`
 **Remote:** `origin` = `https://github.com/vistaroai/Vistaro-MVP.git`
-**Branch:** `repo-001-bootstrap`, created from `main`; commit `4de4a31` "REPO-001: bootstrap monorepo"; a follow-up docs-only commit records verification. Local only; not pushed.
+**Branch:** `repo-001-bootstrap`, created from `main`; commit `4de4a31` "REPO-001: bootstrap monorepo"; follow-up docs commit `0cb9726` and docs note `29224b5`. Merged into `main` via PR #1 on 2026-10-23.
 **Working tree:** clean at the tested commit. The bootstrap was re-tested from a fresh clone at `C:\Users\Anushka\AppData\Local\Temp\opencode\vistaro-repo001-clone`.
 
 **Structure:** monorepo bootstrap. The repository now contains a minimal FastAPI service, a minimal React/Vite app, local service definitions, and a CI workflow. There are no product features, database migrations, authentication, Sentinel, or deployment configuration yet.
@@ -291,7 +291,7 @@ If the repository already contains code or documentation that the roadmap does n
 | `apps/api/` | `pyproject.toml`, `uv.lock`, `.python-version`, `src/vistaro`, `tests` |
 | `apps/web/` | React 19 + TypeScript + Vite 8, Tailwind 4, Vitest, ESLint, Prettier |
 | `infra/docker-compose.yml` | Postgres 16, Redis 7, Mailpit (unverified) |
-| `.github/workflows/ci.yml` | backend, frontend, and secret-scan jobs (not yet run on GitHub) |
+| `.github/workflows/ci.yml` | backend, frontend, and secret-scan jobs |
 
 **Docs layout:** the repository uses the verified `docs/` paths. The six reference documents moved from the repository root to `docs/`; `CLAUDE.md`, `AGENTS.md`, `README.md`, `STARTUP_*.md`, and `Vistaro.docx` stay at the root. WARN-G-009 is resolved.
 
@@ -314,7 +314,7 @@ If the repository already contains code or documentation that the roadmap does n
 | Format check | `cd apps/web` then `pnpm format:check` | Passed |
 | Migrate DB | - | No migrations until `DB-001` |
 | Local services | `docker compose -f infra/docker-compose.yml up -d` | Not run; Docker is not installed. `INFRA-001` |
-| CI | `.github/workflows/ci.yml` | Not run on GitHub; must pass on the first PR |
+| CI | `.github/workflows/ci.yml` | Green on PR #1 (2026-10-23): backend, frontend, secret scan |
 
 **YAML syntax:** `.github/workflows/ci.yml` and `infra/docker-compose.yml` parse with PyYAML. Parsing does not prove that GitHub Actions or Docker will run them.
 
@@ -324,7 +324,9 @@ If the repository already contains code or documentation that the roadmap does n
 
 **Fresh-clone proof:** `git clone --branch repo-001-bootstrap` at `4de4a31`, then the README steps: copied `.env.example` to `.env`, `uv sync`, started the API, and got the health JSON above; ran `pnpm install --frozen-lockfile`, `pnpm dev`, and got HTTP 200. Both check suites passed in the clone.
 
-**Not verified:** CI on GitHub (no push/PR), Docker Compose (Docker absent), staging (`INFRA-001`), database migrations (`DB-001`), and all product features.
+**CI on PR #1 (GitHub-reported, 2026-10-23):** `Backend` passed in ~12s, `Frontend` in ~21s, `Secret scan` in ~8s. This is external verification recorded here because REPO-001 acceptance includes CI on a PR.
+
+**Not verified:** Docker Compose (Docker absent), staging (`INFRA-001`), database migrations (`DB-001`), and all product features.
 
 ---
 

@@ -9,16 +9,15 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | IN_REVIEW | Anushka (platform) with an AI agent | Bootstrap implemented and fresh-clone verified; CI on a PR is the remaining acceptance check. Branch `repo-001-bootstrap`, commit `4de4a31` |
+| DB-001 | Roles, extensions, base schema, RLS | READY (prerequisite: install Docker Desktop for local Postgres) | Anushka (platform) with an AI agent | REPO-001 is DONE; next P0. Needs local Postgres to run migrations |
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | DB-001 | Roles, extensions, base schema, RLS | REPO-001 | BLOCKED (until REPO-001 is DONE after CI) | Write the tenancy test next (`TEST-001`) |
-| 2 | TEST-001 | Cross-workspace isolation test harness | DB-001 | BLOCKED | Must exist before feature code |
-| 3 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | |
-| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | BLOCKED (until REPO-001 is DONE; Docker not installed) | Can run in parallel with DB-001 |
+| 1 | TEST-001 | Cross-workspace isolation test harness | DB-001 | BLOCKED | Must exist before feature code |
+| 2 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | |
+| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY | Prerequisite: install Docker Desktop locally |
 
 ## Parallel non-code tasks (can start now)
 
@@ -35,8 +34,7 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | Blocker | Affects | Needed from |
 |---|---|---|
-| `REPO-001` CI workflow has not run on GitHub; the branch is local only | `REPO-001` acceptance; `DB-001`, `INFRA-001`, `API-001` | Founders approve push/PR, then verify CI green |
-| Docker is not installed; `infra/docker-compose.yml` is unverified | `INFRA-001` | Install Docker Desktop during `INFRA-001` |
+| Docker is not installed; `infra/docker-compose.yml` is unverified | `INFRA-001` and running `DB-001` locally | Install Docker Desktop during `DB-001` / `INFRA-001` |
 | SEVA deadline unknown | `SEVA-001` priority | Founders |
 | Full Product Features report not seen | `DOC-001` | Founders |
 | Hosting plan and region unverified | `INFRA-001` | Verification during `INFRA-001` |
@@ -54,17 +52,18 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | Date | Item | Note |
 |---|---|---|
+| 2026-10-23 | `REPO-001` monorepo bootstrap | Created apps/api, apps/web, infra, CI; fresh clone verified; CI green on PR #1. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0. Docker is still absent |
 | 2026-10-18 | `DEC-001` stack and architecture | Decided under founders' delegation; see `ARCHITECTURE.md` |
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
 
-No software task is complete. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
+`REPO-001` is the only completed build task so far. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
 
 ## Next recommended action
 
-Review branch `repo-001-bootstrap`, push it, and open a PR to run CI and the secret scan; mark `REPO-001` `DONE` only when that PR is green. Then start `DB-001` and `INFRA-001` in parallel. Start `VAL-001` and `DOC-001` the same week.
+Start `DB-001`. Install Docker Desktop first, because DB-001 needs local Postgres. Then run `INFRA-001` in parallel. Start `VAL-001` and `DOC-001` the same week.
 
 ## Full execution sequence (all tasks, in order)
 
