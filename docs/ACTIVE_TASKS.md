@@ -9,7 +9,7 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| DB-001 | Roles, extensions, base schema, RLS | READY (prerequisite: install Docker Desktop for local Postgres) | Anushka (platform) with an AI agent | REPO-001 is DONE; next P0. Needs local Postgres to run migrations |
+| DB-001 | Roles, extensions, base schema, RLS | IN_REVIEW | Anushka (platform) with an AI agent | Implemented and verified locally (all acceptance checks pass); branch `db-001-base-schema` |
 
 ## Next actionable tasks (in order)
 
@@ -34,7 +34,7 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | Blocker | Affects | Needed from |
 |---|---|---|
-| Docker is not installed; `infra/docker-compose.yml` is unverified | `INFRA-001` and running `DB-001` locally | Install Docker Desktop during `DB-001` / `INFRA-001` |
+| Docker Compose Postgres is verified locally; the staging half of `INFRA-001` (Render, Cloudflare Pages, secrets) is untouched | `INFRA-001` | Create staging accounts and verify plan, region, `pgvector` during `INFRA-001` |
 | SEVA deadline unknown | `SEVA-001` priority | Founders |
 | Full Product Features report not seen | `DOC-001` | Founders |
 | Hosting plan and region unverified | `INFRA-001` | Verification during `INFRA-001` |
@@ -54,16 +54,17 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 |---|---|---|
 | 2026-10-23 | `REPO-001` monorepo bootstrap | Created apps/api, apps/web, infra, CI; fresh clone verified; CI green on PR #1. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
-| 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0. Docker is still absent |
+| 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0; Docker Desktop 29.9.2 installed 2026-10-23 |
+| 2026-10-23 | `DB-001` base schema | Roles + `citext` via `infra/initdb/`, Alembic `users`/`workspaces`/`memberships`/`sessions`, forced RLS on `memberships`; all acceptance checks verified locally. See `CLAUDE.md` §12 |
 | 2026-10-18 | `DEC-001` stack and architecture | Decided under founders' delegation; see `ARCHITECTURE.md` |
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
 
-`REPO-001` is the only completed build task so far. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
+`DB-001` is verified locally and in review pending CI on its PR. **Do not mark any build task fully done without verification** (`CLAUDE.md` §4).
 
 ## Next recommended action
 
-Start `DB-001`. Install Docker Desktop first, because DB-001 needs local Postgres. Then run `INFRA-001` in parallel. Start `VAL-001` and `DOC-001` the same week.
+Next: push `db-001-base-schema`, open a PR, and confirm CI is green, then start `TEST-001` (tenancy test harness). Install Docker Desktop is done; `INFRA-001` staging part and `VAL-001`/`DOC-001` can run in parallel.
 
 ## Full execution sequence (all tasks, in order)
 

@@ -1,9 +1,10 @@
 # Vistaro
 
-Agentic AI platform for small-business growth. This repository is the
-`REPO-001` bootstrap: a minimal FastAPI service, a minimal React web app, local
-services, and CI. It does not contain product features, authentication,
-database migrations, or Sentinel approvals yet.
+Agentic AI platform for small-business growth. This repository is the `REPO-001`
+bootstrap plus the `DB-001` base schema: a minimal FastAPI service, a minimal
+React web app, local services, CI, and Alembic migrations for the identity and
+tenancy tables. It does not contain product features, authentication, or
+Sentinel approvals yet.
 
 ## Prerequisites
 
@@ -45,7 +46,7 @@ curl http://127.0.0.1:8000/healthz
 Expected: `{"status":"ok","environment":"local"}`. On PowerShell, use
 `Invoke-RestMethod http://127.0.0.1:8000/healthz` instead of `curl`.
 
-### 2. Web
+### 3. Web
 
 In a second terminal:
 
@@ -57,12 +58,38 @@ pnpm dev
 
 Open <http://localhost:5173>.
 
-The API does not need Postgres or Redis to start; database-backed features
-arrive in `DB-001`. Start local services when you need them:
+The API health check does not need Postgres or Redis to start.
+
+### 2. Database (roles, schema, migrations)
+
+Start the local services. The compose file also mounts `infra/initdb/`, which
+creates the roles (`vistaro_migrator` owns the schema; `vistaro_app` has no
+`BYPASSRLS`) and the `citext` extension on a fresh Postgres volume:
 
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 ```
+
+If your `vistaro` Postgres volume was created before `infra/initdb/` was
+mounted, run the same script once; it is idempotent:
+
+```bash
+docker exec -i vistaro-postgres-1 psql -U vistaro -d vistaro < infra/initdb/01_roles_and_extensions.sql
+```
+
+(On PowerShell: `Get-Content infra/initdb/01_roles_and_extensions.sql -Raw |
+docker exec -i vistaro-postgres-1 psql -U vistaro -d vistaro`.)
+
+Wait for Postgres to be healthy, then run the migrations:
+
+```bash
+cd apps/api
+uv run alembic upgrade head
+```
+
+Migrations run as `vistaro_migrator` (via `MIGRATOR_DATABASE_URL` in `.env`).
+`DATABASE_URL` is the application connection; it uses `vistaro_app`, which
+cannot bypass Row Level Security.
 
 ## Checks
 
@@ -86,9 +113,10 @@ pnpm build
 CLAUDE.md, AGENTS.md       rules and agent pointer
 STARTUP_*.md               product and business context
 docs/                      architecture, roadmap, tasks, warnings, playbook, ADRs
-apps/api/                  FastAPI service
+apps/api/                  FastAPI service, Alembic migrations
 apps/web/                  React + TypeScript + Vite app
 infra/docker-compose.yml   local Postgres, Redis, Mailpit
+infra/initdb/              one-time role/extension bootstrap for Postgres
 .github/workflows/ci.yml   lint, types, tests, import rules, secret scan
 ```
 
@@ -99,7 +127,8 @@ tokens, or customer data. CI runs a secret scan.
 
 ## Status
 
-Bootstrap complete. `REPO-001` was merged through PR #1 on 2026-10-23, and CI
-passed on that PR. Docker Compose is still not verified because Docker is not
-installed locally. See `docs/PROJECT_ROADMAP.md` for the real task status and
-`docs/ACTIVE_TASKS.md` for the current queue.
+`DB-001` base schema is implemented and verified locally. Docker Desktop is
+installed, the Postgres service runs via Docker Compose, and the Alembic
+migrations have been verified on empty and seeded databases. See
+`docs/PROJECT_ROADMAP.md` for the real task status and `docs/ACTIVE_TASKS.md`
+for the current queue.

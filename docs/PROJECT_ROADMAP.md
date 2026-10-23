@@ -14,7 +14,7 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 
 | Item | State |
 |---|---|
-| Stage | Bootstrap complete. `REPO-001` DONE; `DB-001`, `INFRA-001`, `API-001` are next. |
+| Stage | `DB-001` base schema implemented and verified locally (in review pending CI on a PR); next: `TEST-001`, `INFRA-001`. |
 | Competition | DTU SEVA 2026, Stage 1 (deadline: **unknown**, see ACTIVE_TASKS) |
 | Team | Anushka Varshney (frontend and platform), Dimple (AI and backend) |
 | Stack | Bootstrap toolchain verified (FastAPI, React/Vite, uv, pnpm); database, Redis, workers, hosting, and integrations unverified |
@@ -23,10 +23,10 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 | Category | Items |
 |---|---|
 | 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001` |
-| 2. Implemented but not fully verified | `REPO-001` fresh-clone and CI on PR #1 verified; Docker Compose remains unverified |
+| 2. Implemented but not fully verified | `DB-001` (all acceptance checks pass locally; CI on a PR pending) |
 | 3. In progress | None |
-| 4. Ready to implement | `DB-001`, `INFRA-001`, `API-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
-| 5. Blocked | `TEST-001` (waits on `DB-001`), `AUTH-001` (waits on `DB-001`, `SEC-001`), the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
+| 4. Ready to implement | `TEST-001` (unblocks when `DB-001` merges), `INFRA-001` (staging part remains), `API-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
+| 5. Blocked | `AUTH-001` (waits on `SEC-001`), the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
 | 6. Planned for later | Phases 2 to 5 |
 | 7. Still undecided | First niche, pricing, tagline, embeddings provider (`DEC-005`), LLM model names (`DEC-002` evaluation), name clearance |
 
@@ -90,7 +90,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 |---|---|---|---|---|---|---|---|
 | REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | REPO-000, DEC-001 | Fresh clone runs both apps from README; CI runs on a PR; no secrets in history | Fresh-clone test; secret scan | P0 | DONE (fresh clone verified; CI green on PR #1, 2026-10-23) | DELEGATED |
 | INFRA-001 | Local docker-compose; staging on Render and Cloudflare Pages; secrets configured; **verify** plan, region, `pgvector` availability | REPO-001 | Staging reachable; secrets only in platform store; findings recorded | Smoke test; secret scan | P0 | READY | DELEGATED |
-| DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | READY | DELEGATED |
+| DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | IN_REVIEW (verified locally 2026-10-23: upgrade/downgrade/upgrade on empty and seeded DB; `vistaro_app` cannot bypass RLS) | DELEGATED |
 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | READY | DELEGATED |
 | TEST-001 | Test harness and generated cross-workspace isolation tests for every tenant table | DB-001 | Test fails if scoping is removed (proves it detects leaks) | The tests themselves | P0 | BLOCKED | DELEGATED |
 | SEC-001 | Security baseline: CSRF, cookie flags, security headers, rate limiting, secret scanning, dependency alerts | API-001 | Each control demonstrated by a test or CI check | Negative tests | P0 | BLOCKED | DELEGATED |
@@ -228,3 +228,4 @@ One complete loop, all steps real (test accounts allowed where stated):
 | 2026-10-18 | Finalized under founders' delegation: stack and architecture decided; DEC-001, DEC-003, DEC-004 done; full task breakdown for phases 1 to 5; approval flags updated | Claude (delegated) |
 | 2026-10-23 | `REPO-001`: created the monorepo bootstrap, moved reference docs into `docs/`, added CI and compose files, and verified a fresh clone; task is `IN_REVIEW` pending CI on a PR | Claude (delegated) |
 | 2026-10-23 | `REPO-001` merged into `main` via PR #1; CI green on PR #1; task marked `DONE` | Claude (delegated) |
+| 2026-10-23 | `DB-001`: roles + `citext` bootstrap via `infra/initdb/`, Alembic base schema with forced RLS on `memberships`; all acceptance checks verified locally on empty and seeded databases; `IN_REVIEW` pending CI on its PR | Claude (delegated) |
