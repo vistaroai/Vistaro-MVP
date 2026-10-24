@@ -358,7 +358,7 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 
 **CI change:** the backend job now runs a `postgres:16-alpine` service, applies `infra/initdb/01_roles_and_extensions.sql` via `docker exec`, runs `alembic upgrade head`, and exports the three local database URLs. Not yet observed on GitHub until this PR runs.
 
-**Not verified for TEST-001:** CI on the PR, and any upstream application code (repositories arrive with `AUTH-002`, which must reuse `set_tenant_scope`).
+**Not verified for TEST-001:** nothing outstanding in TEST-001 scope (the PR merged as PR #3 on 2026-10-24); application-level tenancy wrappers arrive with `AUTH-002`, which must reuse `set_tenant_scope`.
 
 ---
 
