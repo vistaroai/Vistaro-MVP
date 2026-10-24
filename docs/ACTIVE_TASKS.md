@@ -9,15 +9,16 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| DB-001 | Roles, extensions, base schema, RLS | IN_REVIEW | Anushka (platform) with an AI agent | Implemented and verified locally (all acceptance checks pass); branch `db-001-base-schema` |
+| TEST-001 | Cross-workspace isolation test harness | READY | Anushka (platform) with an AI agent | DB-001 merged via PR #2; the harness is the gate before any feature code |
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | TEST-001 | Cross-workspace isolation test harness | DB-001 | BLOCKED | Must exist before feature code |
-| 2 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | |
-| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY | Prerequisite: install Docker Desktop locally |
+| 1 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI | DB-001 | READY | |
+| 2 | SEC-001 | Security baseline: CSRF, cookie flags, headers, rate limiting | DB-001 | READY | |
+| 3 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Waits on `SEC-001` |
+| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
 
 ## Parallel non-code tasks (can start now)
 
@@ -56,15 +57,16 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0; Docker Desktop 29.9.2 installed 2026-10-23 |
 | 2026-10-23 | `DB-001` base schema | Roles + `citext` via `infra/initdb/`, Alembic `users`/`workspaces`/`memberships`/`sessions`, forced RLS on `memberships`; all acceptance checks verified locally. See `CLAUDE.md` §12 |
+| 2026-10-24 | `DB-001` merged into `main` via PR #2 | Task marked DONE in the roadmap |
 | 2026-10-18 | `DEC-001` stack and architecture | Decided under founders' delegation; see `ARCHITECTURE.md` |
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
 
-`DB-001` is verified locally and in review pending CI on its PR. **Do not mark any build task fully done without verification** (`CLAUDE.md` §4).
+`DB-001` is merged and the only build task marked DONE with evidence. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
 
 ## Next recommended action
 
-Next: push `db-001-base-schema`, open a PR, and confirm CI is green, then start `TEST-001` (tenancy test harness). Install Docker Desktop is done; `INFRA-001` staging part and `VAL-001`/`DOC-001` can run in parallel.
+Start `TEST-001` now (the tenancy test harness). In parallel: `INFRA-001` staging part, and the non-code tasks `VAL-001`/`DOC-001`.
 
 ## Full execution sequence (all tasks, in order)
 

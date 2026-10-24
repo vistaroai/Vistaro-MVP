@@ -343,7 +343,7 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 
 **Design note:** roles/extensions are bootstrapped outside Alembic (creating roles requires privileges a migration role must not have); migrations run as `vistaro_migrator` via `MIGRATOR_DATABASE_URL`; the app will connect as `vistaro_app` via `DATABASE_URL`. Local passwords (`*_local_only`) are development-only and match the compose file.
 
-**Not verified for DB-001:** CI on the PR (pending), the pooled-connection reuse case (that is `TEST-001`'s harness job), and any staging database.
+**Not verified for DB-001:** nothing outstanding in DB-001 scope (the PR merged as PR #2 on 2026-10-24); pooled-connection reuse harness is `TEST-001`'s job, and any staging database belongs to `INFRA-001`.
 
 ---
 
