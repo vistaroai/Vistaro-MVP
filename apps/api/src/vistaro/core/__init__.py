@@ -1,1 +1,75 @@
-"""Core configuration and shared infrastructure."""
+"""Core configuration, error handling, middleware, and pagination infrastructure."""
+
+from vistaro.core.config import Settings, get_settings, settings
+from vistaro.core.errors import (
+    APIError,
+    BadRequestError,
+    Conflict,
+    ConflictError,
+    ErrorDetail,
+    ErrorEnvelope,
+    ForbiddenError,
+    MethodNotAllowedError,
+    NotFound,
+    NotFoundError,
+    PermissionDenied,
+    PermissionDeniedError,
+    RateLimitedError,
+    ServiceUnavailableError,
+    ValidationFailed,
+    ValidationFailedError,
+    register_error_handlers,
+)
+from vistaro.core.idempotency import (
+    IDEMPOTENCY_KEY_HEADER,
+    optional_idempotency_key,
+    require_idempotency_key,
+    validate_idempotency_key,
+)
+from vistaro.core.middleware import (
+    REQUEST_ID_HEADER,
+    RequestIDMiddleware,
+    validate_request_id,
+)
+from vistaro.core.pagination import (
+    CursorPage,
+    CursorPaginationParams,
+    decode_cursor,
+    encode_cursor,
+    paginate_results,
+)
+
+__all__ = [
+    "APIError",
+    "BadRequestError",
+    "Conflict",
+    "ConflictError",
+    "CursorPage",
+    "CursorPaginationParams",
+    "ErrorDetail",
+    "ErrorEnvelope",
+    "ForbiddenError",
+    "IDEMPOTENCY_KEY_HEADER",
+    "MethodNotAllowedError",
+    "NotFound",
+    "NotFoundError",
+    "PermissionDenied",
+    "PermissionDeniedError",
+    "REQUEST_ID_HEADER",
+    "RateLimitedError",
+    "RequestIDMiddleware",
+    "ServiceUnavailableError",
+    "Settings",
+    "ValidationFailed",
+    "ValidationFailedError",
+    "decode_cursor",
+    "encode_cursor",
+    "get_settings",
+    "optional_idempotency_key",
+    "paginate_results",
+    "register_error_handlers",
+    "require_idempotency_key",
+    "settings",
+    "validate_idempotency_key",
+    "validate_request_id",
+]

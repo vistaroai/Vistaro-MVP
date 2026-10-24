@@ -360,6 +360,59 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 
 **Not verified for TEST-001:** nothing outstanding in TEST-001 scope (the PR merged as PR #3 on 2026-10-24); application-level tenancy wrappers arrive with `AUTH-002`, which must reuse `set_tenant_scope`.
 
+### Verified API skeleton state (API-001, 2026-10-24)
+
+**Branch:** `api-001-skeleton` (from `main` at `4fcb1255`). Not yet merged; awaiting founder review.
+**Working directory:** `C:\Users\ASHVITA\Desktop\VistaroAI`
+**Docker:** postgres, redis, mailpit all healthy via `docker compose -f infra/docker-compose.yml up -d`.
+
+#### Files created / modified
+
+| Path | Role |
+|---|---|
+| `apps/api/src/vistaro/core/errors.py` | `ErrorDetail`, `ErrorEnvelope` Pydantic models; typed exception hierarchy (`APIError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `NotFoundError`, `ConflictError`, `ValidationFailedError`, `RateLimitedError`, `ServiceUnavailableError`); `register_error_handlers(app)` |
+| `apps/api/src/vistaro/core/middleware.py` | `RequestIDMiddleware` (BaseHTTPMiddleware); `validate_request_id()` regex `^[a-zA-Z0-9_\-]{1,128}$`; structlog contextvars bind/unbind |
+| `apps/api/src/vistaro/core/pagination.py` | `encode_cursor()`/`decode_cursor()` (base64url, sort-keyed JSON, max 1024 chars); `CursorPaginationParams`; `CursorPage[T]`; `paginate_results[T]()` |
+| `apps/api/src/vistaro/core/idempotency.py` | `validate_idempotency_key()` regex `^[a-zA-Z0-9_\-\.:]{1,128}$`; `require_idempotency_key` and `optional_idempotency_key` FastAPI dependencies |
+| `apps/api/src/vistaro/core/__init__.py` | Re-exports all new symbols from `core` |
+| `apps/api/src/vistaro/main.py` | `register_error_handlers`, `RequestIDMiddleware`, CORS `expose_headers=["X-Request-ID"]`, `/healthz`, `/readyz`, `check_database()`, `check_redis()`, `readiness_checkers` (injectable for tests) |
+| `apps/api/scripts/export_openapi.py` | Deterministic JSON export (sort_keys=True); run: `uv run python scripts/export_openapi.py` |
+| `apps/api/openapi.json` | Generated OpenAPI spec committed to repo |
+| `apps/api/tests/test_errors.py` | 10 contract tests for error envelope and exception hierarchy |
+| `apps/api/tests/test_middleware.py` | 5 tests: ID generation, propagation, invalid/oversized rejection |
+| `apps/api/tests/test_health.py` | 5 tests: liveness, readiness (healthy/degraded with injected checkers), no credential leaks |
+| `apps/api/tests/test_pagination.py` | 11 tests: encode/decode roundtrip, malformed cursor, oversized, empty/under/at/over limit |
+| `apps/api/tests/test_idempotency.py` | 10 tests: valid, missing, empty, invalid chars, length limits, FastAPI dependency |
+| `apps/web/src/lib/api/schema.d.ts` | Generated TypeScript types from OpenAPI (via `openapi-typescript`) |
+| `apps/web/src/lib/api/client.ts` | `createApiClient()` and default `api` instance using `openapi-fetch` |
+| `apps/web/src/lib/api/client.test.ts` | 2 frontend contract tests |
+| `apps/web/package.json` | Added `codegen:api` and `codegen:check` scripts |
+| `.github/workflows/ci.yml` | Added `export-openapi` job (exports spec, verifies no drift vs committed `openapi.json`, uploads artifact); `frontend` job now depends on `export-openapi`, downloads artifact, and runs `codegen:check` |
+
+#### Verification results (all run locally, 2026-10-24)
+
+| Check | Command | Result |
+|---|---|---|
+| Backend lint | `cd apps/api && uv run ruff check .` | ✅ All checks passed |
+| Backend type-check | `cd apps/api && uv run mypy src` | ✅ No issues in 10 source files |
+| Import boundaries | `cd apps/api && uv run lint-imports` | ✅ 1 contract kept, 0 broken |
+| Backend tests | `cd apps/api && uv run pytest -q` | ✅ 47 passed, 1 warning (Starlette httpx deprecation) |
+| Frontend lint | `cd apps/web && pnpm lint` | ✅ Passed |
+| Frontend type-check | `cd apps/web && pnpm typecheck` | ✅ Passed |
+| Frontend tests | `cd apps/web && pnpm test` | ✅ 3 passed (2 test files) |
+| Frontend build | `cd apps/web && pnpm build` | ✅ Passed |
+| Baseline drift check | `cd apps/web && pnpm codegen:check` | ✅ Exited 0 (no drift) |
+| **Negative drift test** | Appended sentinel comment to `schema.d.ts`, ran `pnpm codegen:check` | ✅ Exited 1 ("Generated types are not up-to-date!") |
+| Restore after drift | `pnpm codegen:api` then `pnpm codegen:check` | ✅ Exited 0 (restored, no residual drift) |
+| OpenAPI export | `cd apps/api && uv run python scripts/export_openapi.py` | ✅ `openapi.json` regenerated deterministically |
+| Git openapi drift | `git diff apps/api/openapi.json` | ✅ No diff (file is untracked-new, not modified) |
+
+**Not verified for API-001:** CI run on GitHub Actions (branch not merged; no PR opened yet). All local acceptance checks pass; CI should pass once a PR is opened.
+
+**Security notes:** Request IDs validated and bounded (max 128 chars, alphanumeric+`_-` only). Health endpoints return no credentials, stack traces, or connection strings. Idempotency helper is a key validator and dependency only — no cross-request persistence claim. Cursor encoding is base64url with bounded JSON, no SQL or raw offsets exposed.
+
+**No new tenant tables introduced.** No import-linter contracts broken.
+
 ---
 
 ## 13. Keeping this file small

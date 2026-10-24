@@ -16,6 +16,8 @@
     "test:watch": "vitest",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "codegen:api": "openapi-typescript ../api/openapi.json -o ./src/lib/api/schema.d.ts",
+    "codegen:check": "openapi-typescript ../api/openapi.json -o ./src/lib/api/schema.d.ts --check",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -14,7 +14,7 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 
 | Item | State |
 |---|---|
-| Stage | `REPO-001`, `DB-001`, `TEST-001` DONE (merged via PRs #1-#3). Next in the queue: `INFRA-001` staging, `API-001`, `SEC-001`; `AUTH-001` waits on `SEC-001`. |
+| Stage | `REPO-001`, `DB-001`, `TEST-001` DONE (merged via PRs #1-#3). `API-001` `IN_REVIEW` (branch `api-001-skeleton`, all local checks pass, awaiting founder review). Next after review: `SEC-001`. |
 | Competition | DTU SEVA 2026, Stage 1 (deadline: **unknown**, see ACTIVE_TASKS) |
 | Team | Anushka Varshney (frontend and platform), Dimple (AI and backend) |
 | Stack | Bootstrap toolchain verified (FastAPI, React/Vite, uv, pnpm); database, Redis, workers, hosting, and integrations unverified |
@@ -23,9 +23,9 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 | Category | Items |
 |---|---|
 | 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001`; `DB-001`; `TEST-001` |
-| 2. Implemented but not fully verified | None |
+| 2. Implemented but not fully verified | `API-001` (implemented, all local checks pass; founder review pending) |
 | 3. In progress | None |
-| 4. Ready to implement | `INFRA-001` (staging part remains), `API-001`, `SEC-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
+| 4. Ready to implement | `INFRA-001` (staging part remains), `SEC-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
 | 5. Blocked | `AUTH-001` (waits on `SEC-001`), the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
 | 6. Planned for later | Phases 2 to 5 |
 | 7. Still undecided | First niche, pricing, tagline, embeddings provider (`DEC-005`), LLM model names (`DEC-002` evaluation), name clearance |
@@ -91,7 +91,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 | REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | REPO-000, DEC-001 | Fresh clone runs both apps from README; CI runs on a PR; no secrets in history | Fresh-clone test; secret scan | P0 | DONE (fresh clone verified; CI green on PR #1, 2026-10-23) | DELEGATED |
 | INFRA-001 | Local docker-compose; staging on Render and Cloudflare Pages; secrets configured; **verify** plan, region, `pgvector` availability | REPO-001 | Staging reachable; secrets only in platform store; findings recorded | Smoke test; secret scan | P0 | READY | DELEGATED |
 | DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | DONE (verified locally and merged via PR #2, 2026-10-24) | DELEGATED |
-| API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | READY | DELEGATED |
+| API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | IN_REVIEW (implemented 2026-10-24 on branch `api-001-skeleton`; all acceptance checks verified locally; awaiting founder review before merge) | DELEGATED |
 | TEST-001 | Test harness and generated cross-workspace isolation tests for every tenant table | DB-001 | Test fails if scoping is removed (proves it detects leaks) | The tests themselves | P0 | DONE (verified locally, sabotage proof included; merged via PR #3, 2026-10-24) | DELEGATED |
 | SEC-001 | Security baseline: CSRF, cookie flags, security headers, rate limiting, secret scanning, dependency alerts | API-001 | Each control demonstrated by a test or CI check | Negative tests | P0 | BLOCKED | DELEGATED |
 | OBS-001 | Structured logging, Sentry, `agent_runs` and cost recording, budget table | API-001 | Errors reach Sentry; a sample task records tokens and cost; logs contain no secrets | Log scan; sample run | P1 | BLOCKED | DELEGATED |
@@ -232,3 +232,4 @@ One complete loop, all steps real (test accounts allowed where stated):
 | 2026-10-24 | `DB-001` merged into `main` via PR #2; task marked `DONE`; `TEST-001` unblocked | Claude (delegated) |
 | 2026-10-24 | `TEST-001`: tenancy harness (`tests/test_tenancy.py`) with fixtures, generated per-table tests, pooled-connection case, and sabotage proof (tests fail when the policy is removed). The harness caught a real defect: after commit the session GUC sits at `''` and the old policy cast errored; migration `0002` fixes the policy with `NULLIF`. CI gained a Postgres service so the harness runs on PRs. `IN_REVIEW` | Claude (delegated) |
 | 2026-10-24 | `TEST-001` merged into `main` via PR #3; task marked `DONE`. Next tasks are handed to another teammate | Claude (delegated) |
+| 2026-10-24 | `API-001`: error envelope and typed exceptions, request-ID middleware, `/healthz` and `/readyz`, OpenAPI export (`scripts/export_openapi.py`), TypeScript client (`openapi-typescript`), cursor-pagination helper, idempotency-key helper. Contract tests: 47 backend tests (ruff ✅, mypy ✅, lint-imports ✅, pytest 47/47 ✅), 3 frontend tests (lint ✅, typecheck ✅, vitest 3/3 ✅, build ✅). CI drift check added: `export-openapi` job + `codegen:check` in `frontend` job. Negative drift test verified (exit 1 on drift, exit 0 after restore). Branch: `api-001-skeleton`. Status: `IN_REVIEW` — awaiting founder review | Claude (delegated) |
