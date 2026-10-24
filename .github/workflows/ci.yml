@@ -1,3 +1,4 @@
+
 name: CI
 
 on:
@@ -9,9 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  # Exports the OpenAPI specification from the FastAPI app and uploads it as
-  # an artifact so the frontend job can run the TypeScript client drift check
-  # without needing a running database.
+  # Exports OpenAPI without needing a running database.
   export-openapi:
     name: Export OpenAPI spec
     runs-on: ubuntu-latest
@@ -35,7 +34,7 @@ jobs:
       - name: Export OpenAPI specification
         run: uv run python scripts/export_openapi.py
 
-      - name: Verify OpenAPI export is unchanged (drift check)
+      - name: Verify OpenAPI export is unchanged
         run: |
           if ! git diff --exit-code openapi.json; then
             echo "ERROR: openapi.json is out of date. Run 'uv run python scripts/export_openapi.py' and commit the result."
@@ -55,12 +54,14 @@ jobs:
     defaults:
       run:
         working-directory: apps/api
-    # Local-only credentials matching infra/docker-compose.yml and
-    # infra/initdb/01_roles_and_extensions.sql; these are not secrets.
+
+    # Local-only CI credentials; not production secrets.
     env:
       DATABASE_URL: postgresql://vistaro_app:vistaro_app_local_only@localhost:5432/vistaro
       MIGRATOR_DATABASE_URL: postgresql://vistaro_migrator:vistaro_migrator_local_only@localhost:5432/vistaro
       VISTARO_ADMIN_DATABASE_URL: postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro
+      REDIS_URL: redis://localhost:6379/0
+
     services:
       postgres:
         image: postgres:16-alpine
@@ -75,6 +76,17 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - "6379:6379"
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
 
@@ -142,8 +154,6 @@ jobs:
           path: apps/api
 
       - name: Check TypeScript client drift
-        # Regenerates schema.d.ts from the freshly exported openapi.json and
-        # fails if the committed file differs (--check exits nonzero on diff).
         run: pnpm codegen:check
 
       - name: Lint
