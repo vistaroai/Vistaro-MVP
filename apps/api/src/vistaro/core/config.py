@@ -16,6 +16,9 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     web_origin: str = "http://localhost:5173"
+    database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
+    migrator_database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
+    redis_url: str = "redis://localhost:6379/0"
 
 
 @lru_cache

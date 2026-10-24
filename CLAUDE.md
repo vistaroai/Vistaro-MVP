@@ -326,7 +326,24 @@ If the repository already contains code or documentation that the roadmap does n
 
 **CI on PR #1 (GitHub-reported, 2026-10-23):** `Backend` passed in ~12s, `Frontend` in ~21s, `Secret scan` in ~8s. This is external verification recorded here because REPO-001 acceptance includes CI on a PR.
 
-**Not verified:** Docker Compose (Docker absent), staging (`INFRA-001`), database migrations (`DB-001`), and all product features.
+**Not verified:** staging (`INFRA-001`) and all product features.
+
+### Verified database state (DB-001, 2026-10-23)
+
+Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-compose.yml up -d` verified (Postgres 16, Redis 7, Mailpit, all healthy). Container `vistaro-postgres-1`.
+
+| Item | Verified result |
+|---|---|
+| `infra/initdb/01_roles_and_extensions.sql` | Created roles `vistaro_migrator`, `vistaro_app` (both `NOBYPASSRLS`, `rolbypassrls = f`, superuser = f) and extension `citext`; script is idempotent |
+| `uv run alembic upgrade head` | From `apps/api`; migration `0001` ran as `vistaro_migrator`; tables owned by `vistaro_migrator` |
+| `alembic downgrade -1` + `upgrade head` | Passed on empty DB and again on the same cycle with seeded rows |
+| RLS on `memberships` | Enabled, forced, policy `tenant_isolation`; as `vistaro_app`: no setting → 0 rows; `set_config('app.workspace_id', …, true)` scoped to A → only A's row; insert for workspace B → policy violation; cross-tenant SELECT with WHERE → 0 rows |
+| Schema | `users`, `workspaces`, `memberships` (role CHECK), `sessions` (`id_hash`, no workspace RLS per WARN-D-007), FK-ordered downgrade; no migration touched `vistaro_app` privileges beyond row CRUD |
+| Backend checks on the branch | `ruff check .`, `mypy src`, `lint-imports`, `pytest -q` all pass |
+
+**Design note:** roles/extensions are bootstrapped outside Alembic (creating roles requires privileges a migration role must not have); migrations run as `vistaro_migrator` via `MIGRATOR_DATABASE_URL`; the app will connect as `vistaro_app` via `DATABASE_URL`. Local passwords (`*_local_only`) are development-only and match the compose file.
+
+**Not verified for DB-001:** CI on the PR (pending), the pooled-connection reuse case (that is `TEST-001`'s harness job), and any staging database.
 
 ---
 
