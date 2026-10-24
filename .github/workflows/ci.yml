@@ -15,6 +15,26 @@ jobs:
     defaults:
       run:
         working-directory: apps/api
+    # Local-only credentials matching infra/docker-compose.yml and
+    # infra/initdb/01_roles_and_extensions.sql; these are not secrets.
+    env:
+      DATABASE_URL: postgresql://vistaro_app:vistaro_app_local_only@localhost:5432/vistaro
+      MIGRATOR_DATABASE_URL: postgresql://vistaro_migrator:vistaro_migrator_local_only@localhost:5432/vistaro
+      VISTARO_ADMIN_DATABASE_URL: postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: vistaro
+          POSTGRES_USER: vistaro
+          POSTGRES_PASSWORD: vistaro_local_only
+        ports:
+          - "5432:5432"
+        options: >-
+          --health-cmd "pg_isready -U vistaro -d vistaro"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +48,14 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --frozen
+
+      - name: Bootstrap database roles (DB-001)
+        run: |
+          cat ../../infra/initdb/01_roles_and_extensions.sql |
+            docker exec -i ${{ job.services.postgres.id }} psql -U vistaro -d vistaro
+
+      - name: Run migrations
+        run: uv run alembic upgrade head
 
       - name: Lint
         run: uv run ruff check .

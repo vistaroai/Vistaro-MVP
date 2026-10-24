@@ -9,7 +9,7 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| TEST-001 | Cross-workspace isolation test harness | READY | Anushka (platform) with an AI agent | DB-001 merged via PR #2; the harness is the gate before any feature code |
+| TEST-001 | Cross-workspace isolation test harness | READY | Anushka (platform) with an AI agent | Implemented on `test-001-tenancy-harness`; every check passes locally, sabotage proof done |
 
 ## Next actionable tasks (in order)
 

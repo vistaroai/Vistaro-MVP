@@ -345,6 +345,21 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 
 **Not verified for DB-001:** nothing outstanding in DB-001 scope (the PR merged as PR #2 on 2026-10-24); pooled-connection reuse harness is `TEST-001`'s job, and any staging database belongs to `INFRA-001`.
 
+### Verified tenancy harness (TEST-001, 2026-10-24)
+
+| Item | Verified result |
+|---|---|
+| `src/vistaro/db/tenancy.py` | `sqlalchemy_url` pins psycopg 3; `set_tenant_scope` uses transaction-local `set_config('app.workspace_id', …, true)`; `TENANT_TABLE_WORKSPACE_COLUMNS` registry (new tenant tables must register here) |
+| `tests/conftest.py` | Admin engine (seed/cleanup only) and app engine connecting exactly as `vistaro_app`; fixture truncates, seeds two workspaces, truncates after |
+| `tests/test_tenancy.py` | 7 tests: unscoped sees zero rows; scoped sees only own rows; explicit cross-tenant filter returns zero; cross-tenant INSERT rejected by policy; pooled-connection reuse leaves no scope; generated per-table test for `memberships` |
+| Sabotage proof | With `tenant_isolation` dropped on `memberships`, 3 tests fail (harness detects removed scoping); policy restored and tests pass again |
+| Defect found and fixed | Migration `0002`: after a scoped transaction commits, the session GUC rests at `''` and the pre-0002 policy cast raised `InvalidTextRepresentation` instead of denying; `NULLIF(..., '')` now denies quietly. Down-verifiable (`downgrade -1` restores the old policy) |
+| Backend checks on the branch | `ruff check .`, `mypy src`, `lint-imports`, `pytest -q` (7 passed) |
+
+**CI change:** the backend job now runs a `postgres:16-alpine` service, applies `infra/initdb/01_roles_and_extensions.sql` via `docker exec`, runs `alembic upgrade head`, and exports the three local database URLs. Not yet observed on GitHub until this PR runs.
+
+**Not verified for TEST-001:** CI on the PR, and any upstream application code (repositories arrive with `AUTH-002`, which must reuse `set_tenant_scope`).
+
 ---
 
 ## 13. Keeping this file small
