@@ -99,7 +99,15 @@ uv run ruff check .
 uv run mypy src
 uv run lint-imports
 uv run pytest -q
+```
 
+The tenancy tests (`tests/test_tenancy.py`) need the local Postgres service
+running (they exercise the real database); without it they skip with a
+note. CI runs a Postgres service so they never skip there.
+
+Frontend checks:
+
+```bash
 cd ../web
 pnpm lint
 pnpm typecheck
