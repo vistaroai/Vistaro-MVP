@@ -7,9 +7,12 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 
 ## Current task
 
+Handover: the next tasks are picked up by another teammate. Nothing is in
+progress right now; the ordered queue below is the handoff.
+
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| TEST-001 | Cross-workspace isolation test harness | READY | Anushka (platform) with an AI agent | Implemented on `test-001-tenancy-harness`; every check passes locally, sabotage proof done |
+| -- | (none in progress) | -- | -- | `TEST-001` merged via PR #3 and queue handed to a teammate |
 
 ## Next actionable tasks (in order)
 
@@ -58,6 +61,7 @@ Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
 | 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0; Docker Desktop 29.9.2 installed 2026-10-23 |
 | 2026-10-23 | `DB-001` base schema | Roles + `citext` via `infra/initdb/`, Alembic `users`/`workspaces`/`memberships`/`sessions`, forced RLS on `memberships`; all acceptance checks verified locally. See `CLAUDE.md` §12 |
 | 2026-10-24 | `DB-001` merged into `main` via PR #2 | Task marked DONE in the roadmap |
+| 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
 | 2026-10-18 | `DEC-001` stack and architecture | Decided under founders' delegation; see `ARCHITECTURE.md` |
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
