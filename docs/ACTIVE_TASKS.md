@@ -1,27 +1,27 @@
 # ACTIVE TASKS — Vistaro
 
 Execution queue and full ordered task sequence. Definitions and acceptance criteria: `/docs/PROJECT_ROADMAP.md`. Step-by-step instructions per task: `/docs/TASK_PLAYBOOK.md`. Rules: `/CLAUDE.md`.
-Last updated: 2026-10-23 · Cycle: **Cycle 0 — Bootstrap and validation**
+Last updated: 2026-10-24 · Cycle: **Cycle 1 — API skeleton (API-001)**
 
 > Status words match the roadmap. If this file and the roadmap disagree, the roadmap wins; fix this file.
 
 ## Current task
 
-Handover: the next tasks are picked up by another teammate. Nothing is in
-progress right now; the ordered queue below is the handoff.
+`API-001` is implemented and in review. All local acceptance checks pass. The branch `api-001-skeleton` is ready for founder review before merge.
+
+**Handover note (2026-10-24):** API-001 is complete on `api-001-skeleton`. Do NOT merge without founder review. Once merged, the next code task is `SEC-001` (security baseline). See the final report in `CLAUDE.md` §12 for full details.
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| -- | (none in progress) | -- | -- | `TEST-001` merged via PR #3 and queue handed to a teammate |
+| API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI, TS client, pagination, idempotency | IN_REVIEW | AI agent | Implemented 2026-10-24; branch `api-001-skeleton`; awaiting founder review |
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI | DB-001 | READY | |
-| 2 | SEC-001 | Security baseline: CSRF, cookie flags, headers, rate limiting | DB-001 | READY | |
-| 3 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Waits on `SEC-001` |
-| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
+| 1 | SEC-001 | Security baseline: CSRF, cookie flags, headers, rate limiting | API-001 | BLOCKED | Waits on `API-001` merge |
+| 2 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Waits on `SEC-001` |
+| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
 
 ## Parallel non-code tasks (can start now)
 
@@ -38,6 +38,7 @@ progress right now; the ordered queue below is the handoff.
 
 | Blocker | Affects | Needed from |
 |---|---|---|
+| `API-001` awaiting founder review before merge | `SEC-001` (depends on API-001) | Founders — review `api-001-skeleton` branch |
 | Docker Compose Postgres is verified locally; the staging half of `INFRA-001` (Render, Cloudflare Pages, secrets) is untouched | `INFRA-001` | Create staging accounts and verify plan, region, `pgvector` during `INFRA-001` |
 | SEVA deadline unknown | `SEVA-001` priority | Founders |
 | Full Product Features report not seen | `DOC-001` | Founders |
@@ -56,12 +57,13 @@ progress right now; the ordered queue below is the handoff.
 
 | Date | Item | Note |
 |---|---|---|
+| 2026-10-24 | `API-001` implemented on `api-001-skeleton` | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. 47 backend tests, 3 frontend tests all pass. CI drift check added. Status: IN_REVIEW |
+| 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
 | 2026-10-23 | `REPO-001` monorepo bootstrap | Created apps/api, apps/web, infra, CI; fresh clone verified; CI green on PR #1. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | Local tooling | Installed uv 0.13.5 and Python 3.12.15 (via uv); pnpm 12.15.0; Docker Desktop 29.9.2 installed 2026-10-23 |
 | 2026-10-23 | `DB-001` base schema | Roles + `citext` via `infra/initdb/`, Alembic `users`/`workspaces`/`memberships`/`sessions`, forced RLS on `memberships`; all acceptance checks verified locally. See `CLAUDE.md` §12 |
 | 2026-10-24 | `DB-001` merged into `main` via PR #2 | Task marked DONE in the roadmap |
-| 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
 | 2026-10-18 | `DEC-001` stack and architecture | Decided under founders' delegation; see `ARCHITECTURE.md` |
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
@@ -70,7 +72,7 @@ progress right now; the ordered queue below is the handoff.
 
 ## Next recommended action
 
-Start `TEST-001` now (the tenancy test harness). In parallel: `INFRA-001` staging part, and the non-code tasks `VAL-001`/`DOC-001`.
+Review and merge `api-001-skeleton` branch (API-001). Once merged, begin `SEC-001` (security baseline). In parallel: continue the non-code tracks (`VAL-001`, `DOC-001`, `SEVA-001`).
 
 ## Full execution sequence (all tasks, in order)
 

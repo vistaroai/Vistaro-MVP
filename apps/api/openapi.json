@@ -1,0 +1,196 @@
+{
+  "components": {
+    "schemas": {
+      "DependencyChecks": {
+        "description": "Breakdown of readiness dependency statuses.",
+        "properties": {
+          "database": {
+            "description": "PostgreSQL connectivity status ('ok' or 'failed')",
+            "title": "Database",
+            "type": "string"
+          },
+          "redis": {
+            "description": "Redis connectivity status ('ok' or 'failed')",
+            "title": "Redis",
+            "type": "string"
+          }
+        },
+        "required": [
+          "database",
+          "redis"
+        ],
+        "title": "DependencyChecks",
+        "type": "object"
+      },
+      "ErrorDetail": {
+        "additionalProperties": false,
+        "description": "Inner error payload containing code, message, and optional details.",
+        "properties": {
+          "code": {
+            "description": "Machine-readable error code",
+            "title": "Code",
+            "type": "string"
+          },
+          "details": {
+            "description": "Optional structured error details",
+            "title": "Details"
+          },
+          "message": {
+            "description": "Human-readable error description",
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail",
+        "type": "object"
+      },
+      "ErrorEnvelope": {
+        "additionalProperties": false,
+        "description": "Standard Vistaro API error envelope.",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorDetail"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "description": "Liveness check response.",
+        "properties": {
+          "environment": {
+            "description": "Deployment environment name",
+            "title": "Environment",
+            "type": "string"
+          },
+          "status": {
+            "default": "ok",
+            "description": "Process liveness status",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "environment"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "ReadyResponse": {
+        "description": "Readiness check response.",
+        "properties": {
+          "checks": {
+            "$ref": "#/components/schemas/DependencyChecks",
+            "description": "Individual dependency check results"
+          },
+          "environment": {
+            "description": "Deployment environment name",
+            "title": "Environment",
+            "type": "string"
+          },
+          "status": {
+            "description": "Readiness status ('ok' or 'unhealthy')",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "environment",
+          "checks"
+        ],
+        "title": "ReadyResponse",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Vistaro AI Platform API",
+    "title": "Vistaro API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "description": "Indicates whether the API process is alive.",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Process is running"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Liveness check",
+        "tags": [
+          "System"
+        ]
+      }
+    },
+    "/readyz": {
+      "get": {
+        "description": "Indicates whether the API and dependencies (Postgres, Redis) can serve traffic.",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "All dependencies are healthy and ready"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadyResponse"
+                }
+              }
+            },
+            "description": "One or more dependencies are unhealthy"
+          }
+        },
+        "summary": "Readiness check",
+        "tags": [
+          "System"
+        ]
+      }
+    }
+  }
+}
