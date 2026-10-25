@@ -2,6 +2,7 @@
 
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +20,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
     migrator_database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
     redis_url: str = "redis://localhost:6379/0"
+    rate_limit_requests: int = Field(default=120, ge=1)
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
 
 
 @lru_cache

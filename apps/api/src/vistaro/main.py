@@ -1,17 +1,40 @@
 """FastAPI application entry point."""
 
-from collections.abc import Callable
+from collections.abc import AsyncIterator, Callable
+from contextlib import asynccontextmanager
 
 import redis
 from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from redis.asyncio import Redis
 from sqlalchemy import text
 
 from vistaro.core.config import settings
 from vistaro.core.errors import ErrorEnvelope, register_error_handlers
 from vistaro.core.middleware import RequestIDMiddleware
+from vistaro.core.security import csrf_cookie_options, new_csrf_token
+from vistaro.core.security_middleware import (
+    CSRFMiddleware,
+    RedisRateLimitMiddleware,
+    SecurityHeadersMiddleware,
+)
 from vistaro.db.tenancy import build_engine
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI) -> AsyncIterator[None]:
+    """Close the shared Redis rate-limit client when the API shuts down."""
+    application.state.rate_limit_redis = Redis.from_url(
+        settings.redis_url,
+        socket_connect_timeout=2.0,
+        socket_timeout=2.0,
+    )
+    try:
+        yield
+    finally:
+        await application.state.rate_limit_redis.aclose()
+
 
 app = FastAPI(
     title="Vistaro API",
@@ -20,21 +43,29 @@ app = FastAPI(
     responses={
         500: {"model": ErrorEnvelope, "description": "Internal server error"},
     },
+    lifespan=lifespan,
 )
 
 # Exception handlers
 register_error_handlers(app)
 
-# Middlewares (RequestIDMiddleware outermost to trace all requests and errors)
+# CORS is outermost so browser clients can read CSRF and rate-limit error envelopes.
+app.add_middleware(CSRFMiddleware, web_origin=settings.web_origin)
+app.add_middleware(
+    RedisRateLimitMiddleware,
+    limit=settings.rate_limit_requests,
+    window_seconds=settings.rate_limit_window_seconds,
+)
+app.add_middleware(RequestIDMiddleware)
+app.add_middleware(SecurityHeadersMiddleware, app_env=settings.app_env)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.web_origin],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["X-Request-ID"],
+    expose_headers=["X-Request-ID", "X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"],
 )
-app.add_middleware(RequestIDMiddleware)
 
 
 # --- Response Schemas ---
@@ -97,6 +128,19 @@ readiness_checkers: dict[str, Callable[[], bool]] = {
 
 
 # --- System Endpoints ---
+
+
+@app.get("/csrf", summary="Get a CSRF token", tags=["System"])
+def csrf_token(response: Response) -> dict[str, str]:
+    """Issue a short-lived CSRF double-submit token, not an authenticated session."""
+    token = new_csrf_token()
+    response.set_cookie(
+        key="csrf_token",
+        value=token,
+        **csrf_cookie_options(settings.app_env),
+    )
+    response.headers["Cache-Control"] = "no-store"
+    return {"csrf_token": token}
 
 
 @app.get(

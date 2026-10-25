@@ -1,27 +1,29 @@
 # ACTIVE TASKS — Vistaro
 
 Execution queue and full ordered task sequence. Definitions and acceptance criteria: `/docs/PROJECT_ROADMAP.md`. Step-by-step instructions per task: `/docs/TASK_PLAYBOOK.md`. Rules: `/CLAUDE.md`.
-Last updated: 2026-10-24 · Cycle: **Cycle 1 — API skeleton (API-001)**
+Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 > Status words match the roadmap. If this file and the roadmap disagree, the roadmap wins; fix this file.
 
 ## Current task
 
-`API-001` is implemented and in review. All local acceptance checks pass. The branch `api-001-skeleton` is ready for founder review before merge.
+`SEC-001` is implemented on `sec-001-security-baseline` and remains `IN_REVIEW` pending founder review and CI on a pull request. All feasible local checks and both dependency audits passed; the remote CI and secret-scan job remain unrun.
 
-**Handover note (2026-10-24):** API-001 is complete on `api-001-skeleton`. Do NOT merge without founder review. Once merged, the next code task is `SEC-001` (security baseline). See the final report in `CLAUDE.md` §12 for full details.
+**Handover note (2026-10-24):** API-001 was merged to `main` via PR #4 at `85d800d`. SEC-001 is now in review. Do not start AUTH-001 until SEC-001's acceptance and review requirements are satisfied.
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI, TS client, pagination, idempotency | IN_REVIEW | AI agent | Implemented 2026-10-24; branch `api-001-skeleton`; awaiting founder review |
+| SEC-001 | Security baseline: CSRF, cookie flags, headers/CSP, Redis rate limiting, secret scan, dependency audits | IN_REVIEW | AI agent | Implemented 2026-10-24 on `sec-001-security-baseline`; local checks recorded in `CLAUDE.md` §12 |
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | SEC-001 | Security baseline: CSRF, cookie flags, headers, rate limiting | API-001 | BLOCKED | Waits on `API-001` merge |
-| 2 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Waits on `SEC-001` |
-| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
+| 1 | OBS-001 | Observability and cost recording | API-001 | READY | Dependency is merged; follow the ordered Wave B sequence after SEC-001 |
+| 2 | UI-001 | Web app shell | API-001 | READY | Dependency is merged; follow the ordered Wave B sequence after SEC-001 |
+| 3 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Starts only after SEC-001 is accepted and marked DONE |
+| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
+| 5 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; implementation remains later in Wave D |
 
 ## Parallel non-code tasks (can start now)
 
@@ -38,7 +40,7 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — API skeleton (API-001)**
 
 | Blocker | Affects | Needed from |
 |---|---|---|
-| `API-001` awaiting founder review before merge | `SEC-001` (depends on API-001) | Founders — review `api-001-skeleton` branch |
+| `SEC-001` in review | `AUTH-001` | Founders — review security baseline; CI on PR must pass |
 | Docker Compose Postgres is verified locally; the staging half of `INFRA-001` (Render, Cloudflare Pages, secrets) is untouched | `INFRA-001` | Create staging accounts and verify plan, region, `pgvector` during `INFRA-001` |
 | SEVA deadline unknown | `SEVA-001` priority | Founders |
 | Full Product Features report not seen | `DOC-001` | Founders |
@@ -57,7 +59,8 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — API skeleton (API-001)**
 
 | Date | Item | Note |
 |---|---|---|
-| 2026-10-24 | `API-001` implemented on `api-001-skeleton` | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. 47 backend tests, 3 frontend tests all pass. CI drift check added. Status: IN_REVIEW |
+| 2026-10-24 | `SEC-001` implementation | Branch `sec-001-security-baseline`; CSRF, cookie defaults, response headers, Redis rate limiting, dependency audit CI; `IN_REVIEW`. See `CLAUDE.md` §12 |
+| 2026-10-24 | `API-001` implemented and merged via PR #4 | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. Local acceptance checks recorded in `CLAUDE.md` §12. Status: DONE |
 | 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
 | 2026-10-23 | `REPO-001` monorepo bootstrap | Created apps/api, apps/web, infra, CI; fresh clone verified; CI green on PR #1. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
@@ -68,11 +71,11 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — API skeleton (API-001)**
 | 2026-10-18 | `DEC-003` minimal approval in Phase 1 | Yes |
 | 2026-10-18 | `DEC-004` competitor watch in Pulse | Yes |
 
-`DB-001` is merged and the only build task marked DONE with evidence. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
+`DB-001` and `API-001` are merged and marked DONE with evidence. **Do not mark any build task done without verification** (`CLAUDE.md` §4).
 
 ## Next recommended action
 
-Review and merge `api-001-skeleton` branch (API-001). Once merged, begin `SEC-001` (security baseline). In parallel: continue the non-code tracks (`VAL-001`, `DOC-001`, `SEVA-001`).
+Review SEC-001 on `sec-001-security-baseline` and confirm its CI checks. Only after SEC-001 is accepted and marked `DONE` does AUTH-001 become unblocked. INFRA-001 and the ready non-code tracks can proceed independently.
 
 ## Full execution sequence (all tasks, in order)
 

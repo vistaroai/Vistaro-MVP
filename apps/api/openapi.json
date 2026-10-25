@@ -118,6 +118,42 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/csrf": {
+      "get": {
+        "description": "Issue a short-lived CSRF double-submit token, not an authenticated session.",
+        "operationId": "csrf_token_csrf_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Csrf Token Csrf Get",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Get a CSRF token",
+        "tags": [
+          "System"
+        ]
+      }
+    },
     "/healthz": {
       "get": {
         "description": "Indicates whether the API process is alive.",

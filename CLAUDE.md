@@ -407,11 +407,45 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 | OpenAPI export | `cd apps/api && uv run python scripts/export_openapi.py` | ✅ `openapi.json` regenerated deterministically |
 | Git openapi drift | `git diff apps/api/openapi.json` | ✅ No diff (file is untracked-new, not modified) |
 
-**Not verified for API-001:** CI run on GitHub Actions (branch not merged; no PR opened yet). All local acceptance checks pass; CI should pass once a PR is opened.
+**Status update:** API-001 was merged to `main` via PR #4 at `85d800d` on 2026-10-24. Its local acceptance checks were recorded above. GitHub Actions results for PR #4 were not independently rechecked during SEC-001.
 
 **Security notes:** Request IDs validated and bounded (max 128 chars, alphanumeric+`_-` only). Health endpoints return no credentials, stack traces, or connection strings. Idempotency helper is a key validator and dependency only — no cross-request persistence claim. Cursor encoding is base64url with bounded JSON, no SQL or raw offsets exposed.
 
 **No new tenant tables introduced.** No import-linter contracts broken.
+
+### Verified security baseline state (SEC-001, 2026-10-24)
+
+**Branch:** `sec-001-security-baseline`, created from clean `main` at `85d800d`. No commits, push, merge, deployment, authentication flow, or session issuance.
+
+| Control | Implementation and local evidence |
+|---|---|
+| CSRF | `GET /csrf` issues an unpredictable one-hour double-submit token cookie and returns the token without caching. Unsafe methods require the exact configured `WEB_ORIGIN`, matching cookie and `X-CSRF-Token`; safe methods pass. Tests cover missing/mismatched token, wrong origin, and valid token. The web API client adds the header when supplied a `getCsrfToken` callback and only sends it to the configured API origin. AUTH-001 must bind CSRF validation to the authenticated session. |
+| Cookie defaults | `session_cookie_options` returns `HttpOnly`, `Secure` outside local, and `SameSite=Lax` locally / `None` for staging and production (cross-site Pages-to-API deployment); tested. No session cookie is issued in this task. CSRF cookie is readable by design and has `Path=/`, `Max-Age=3600`, secure environment flags. |
+| Headers | CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` apply to success and error responses. HSTS is set only for `APP_ENV=staging` or `production`; local and test environments omit it. |
+| Rate limiting | Redis Lua fixed-window counter; default 120 requests per direct ASGI peer per 60 seconds. Returns 429 with `Retry-After` and limit headers; returns 503 on Redis errors; `/healthz` and `/readyz` are exempt. `X-Forwarded-For` is not trusted. Tests cover threshold, reset, forwarded-header spoofing, health exemption, backend failure, and invalid configuration. |
+| Dependency and secret checks | CI adds `uv audit --locked` and `pnpm audit --prod --audit-level=high`; Dependabot checks Python, npm/pnpm, and GitHub Actions weekly. TruffleHog remains in CI, now reports verified and unknown findings. Local audits observed no known vulnerabilities. |
+
+**Verification results (2026-10-24):**
+
+| Check | Result |
+|---|---|
+| `uv run ruff check .` | Passed |
+| `uv run mypy src` | Passed; 12 source files |
+| `uv run lint-imports` | Passed; 1 contract kept, 0 broken |
+| `uv run pytest -q` | Passed; 61 tests. Existing Starlette/httpx deprecation warning remains. |
+| `uv run python scripts/export_openapi.py` | Passed; deterministic OpenAPI regenerated with LF line endings |
+| `uv audit --locked` | Passed; no known vulnerabilities/adverse statuses in 77 packages. uv 0.13.4 reported this command is experimental. |
+| `pnpm.cmd lint` / `typecheck` / `test` / `build` | Passed; 6 frontend tests |
+| `pnpm.cmd format:check` / `codegen:check` | Passed |
+| `pnpm.cmd audit --prod --audit-level=high` | Passed; no known vulnerabilities |
+| CI and Dependabot YAML parse | Passed using PyYAML |
+| `git diff --check` | Passed |
+
+**Not run:** GitHub Actions and TruffleHog on this branch (the branch was not pushed and no PR was opened); no staging or browser-based deployment test; repository-level GitHub advisory settings were not inspected. The first npm audit attempt failed DNS in the sandbox; the elevated rerun succeeded with no known vulnerabilities.
+
+**Limitations:** hosted proxy behavior is not verified (`WARN-E-007`); all users sharing one direct proxy peer may share a rate-limit bucket. Redis is required for non-health routes and the limiter fails closed. The fixed-window approach can burst across a window boundary. The CI TruffleHog action still references mutable `@main`, as it did before this task. `AUTH-001` must consume the tested session cookie defaults, and `UI-001` must fetch/store the `/csrf` token and provide the client callback.
+
+**Task status:** SEC-001 is `IN_REVIEW`. Do not start AUTH-001 until founder review, branch CI, and documented acceptance requirements are satisfied.
 
 ---
 

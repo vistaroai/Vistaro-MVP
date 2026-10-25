@@ -78,6 +78,8 @@ Add at the repo root: `.gitignore` (include `.env`, `*.pem`, `node_modules`, `.v
 | `DATABASE_URL` | App connection (role `vistaro_app`) |
 | `MIGRATOR_DATABASE_URL` | Migration connection (role `vistaro_migrator`) |
 | `REDIS_URL` | Broker and limits |
+| `RATE_LIMIT_REQUESTS` | Maximum requests per direct peer in a fixed window (default `120`) |
+| `RATE_LIMIT_WINDOW_SECONDS` | Fixed-window duration in seconds (default `60`) |
 | `SESSION_SECRET` | Signing and CSRF |
 | `ENCRYPTION_KEYS` | Key ID to key map for connection tokens |
 | `LLM_PROVIDER`, `LLM_API_KEY` | LLM access |
@@ -270,6 +272,13 @@ Migrations for `users`, `workspaces`, `memberships`, `sessions`, with RLS on ten
 ### API-001
 Error envelope, request ID middleware, health endpoints, OpenAPI export, generated TypeScript client, pagination helper, idempotency-key helper.
 
+### SEC-001 — Security baseline
+The API issues a short-lived CSRF token at `GET /csrf`. Browser clients must keep the returned token in memory and send it as `X-CSRF-Token` on unsafe methods; the API also checks the exact configured `WEB_ORIGIN` and matching host-only CSRF cookie. The existing web API client accepts a `getCsrfToken` callback and sends it only to the configured API origin; UI-001 must connect its token-fetch lifecycle. This endpoint does not create an authenticated session. AUTH-001 must bind CSRF validation to the authenticated session (for example, a synchronizer token or session-bound signed double-submit token).
+
+The API applies CSP and browser security headers to success and error responses; HSTS is emitted only for `APP_ENV=staging` or `production`. The CSP allows inline scripts/styles and jsDelivr for FastAPI's built-in Swagger UI; it does not allow framing or external API connections. A future session cookie must use the tested `session_cookie_options` helper. The current app does not issue session cookies.
+
+Redis enforces a fixed-window limit per direct ASGI peer (defaults: 120 requests per 60 seconds). `/healthz` and `/readyz` are exempt so health checks survive a Redis outage; other requests fail closed with 503 if Redis is unavailable. Forwarded IP headers are ignored. Until `INFRA-001` verifies the proxy chain, users sharing one proxy peer may share a limit. Fixed windows can permit a burst at a window boundary; login and public form routes should add task-specific limits when implemented.
+
 ### AI-001 / AI-002
 1. Task runtime per 4.3; `claim` must be atomic (`UPDATE ... WHERE status='queued' RETURNING`).
 2. `LLMClient` interface plus one provider implementation; budgets; `agent_runs` recording; fake provider for tests (clearly labeled mock).
@@ -318,7 +327,7 @@ Error envelope, request ID middleware, health endpoints, OpenAPI export, generat
 | Unit | pytest, Vitest | Scoring rules, plan validation, permission map, hashing, state transitions |
 | Integration | pytest with real Postgres and Redis in CI services | Routes, repos, migrations, Celery tasks, connector fakes |
 | Tenancy | pytest | Cross-workspace isolation for every tenant table (generated per table) |
-| Security | pytest | Approval bypass attempts, role matrix, CSRF, rate limits, upload validation |
+| Security | pytest | Approval bypass attempts, role matrix, CSRF, rate limits, upload validation; SEC-001 adds negative CSRF/rate-limit and response-header checks |
 | AI evals | pytest in `tests/evals`, run on demand and before prompt or model changes | Brand scoring agreement, plan validity rate, structured output failure rate, groundedness (Phase 3) |
 | E2E | Playwright | Core loop on staging |
 | Failure injection | pytest | Provider timeout, connector 429, worker crash mid-step, duplicate delivery |
@@ -329,34 +338,11 @@ Mocks and fakes are allowed in tests and must be labeled. Real-provider tests ar
 
 ---
 
-## 9. CI/CD (workflow outline)
+## 9. CI/CD
 
-```yaml
-# .github/workflows/ci.yml  (sketch; adapt and verify)
-name: ci
-on: [pull_request, push]
-jobs:
-  api:
-    runs-on: ubuntu-latest
-    services:
-      postgres: { image: postgres:16, env: { POSTGRES_PASSWORD: test }, ports: ["5432:5432"] }
-      redis:    { image: redis:7, ports: ["6379:6379"] }
-    steps:
-      - uses: actions/checkout@v4
-      - run: pip install uv && cd apps/api && uv sync
-      - run: cd apps/api && uv run ruff check . && uv run mypy src && uv run lint-imports
-      - run: cd apps/api && uv run alembic upgrade head && uv run pytest -q
-  web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cd apps/web && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test
-  secrets:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: echo "add a secret-scanning step here (for example gitleaks)"
-```
+The verified workflow is `.github/workflows/ci.yml`. It audits Python lockfile dependencies with `uv audit --locked`, production pnpm dependencies with `pnpm audit --prod --audit-level=high`, and scans repository history with TruffleHog. Backend and frontend lint, type checks, tests, build, and OpenAPI drift checks remain in CI. These audit commands require network access to vulnerability databases/registries.
+
+`.github/dependabot.yml` checks Python, npm/pnpm, and GitHub Actions dependencies weekly. Dependabot configuration does not enable GitHub's repository-level advisory setting; founders may still need to confirm that setting is enabled in the repository.
 
 Deploy workflows: staging deploys on merge to `main`; production requires a manual approval step in GitHub Environments.
 
