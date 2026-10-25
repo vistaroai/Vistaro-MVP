@@ -1,6 +1,6 @@
 # PROJECT WARNINGS — Vistaro
 
-Central register of warnings, constraints, known issues and technical debt. Last updated: 2026-10-23.
+Central register of warnings, constraints, known issues and technical debt. Last updated: 2026-10-24.
 Rules: `/CLAUDE.md` §7. Roadmap: `/docs/PROJECT_ROADMAP.md`.
 
 ## How to read this register
@@ -26,13 +26,14 @@ Every entry has one **Type**:
 
 | ID | Sev | Type | Description | Affected | Impact | Recommended control | Status | Verification required |
 |---|---|---|---|---|---|---|---|---|
-| WARN-A-001 | CRITICAL | PREVENTIVE | Secrets or API keys committed to source control | Whole repo | Account compromise, cost abuse | Secrets only in environment or secret manager; `.env.example` with names only; secret scanning in CI | Open (control not yet in place; no repo) | Secret scan passes in CI |
+| WARN-A-001 | CRITICAL | PREVENTIVE | Secrets or API keys committed to source control | Whole repo | Account compromise, cost abuse | Secrets only in environment or secret manager; `.env.example` with names only; secret scanning in CI | Partially addressed: TruffleHog runs in CI and includes verified/unknown findings; SEC-001 CI result pending | Secret scan passes in CI |
 | WARN-A-002 | CRITICAL | PREVENTIVE | Destructive database operations (drop, truncate, reset, mass update) without authorization and recovery plan | Database | Permanent data loss | Explicit founder approval; backup first; rollback plan; never run on production casually | Open | Backup restore tested |
 | WARN-A-003 | CRITICAL | PREVENTIVE | Casual production deployments or migrations | Production | Outage, data loss | Staging first; manual promotion; rollback rehearsal | Open | Rollback rehearsal recorded |
 | WARN-A-004 | CRITICAL | CONSTRAINT | Public, outbound, or financial actions executing without approval | Muse, Convert, Market, Orbit | Unauthorized posts or messages to customers, reputational and legal harm | Route all such actions through Sentinel approval and audit (C-01, C-04); tests that prove bypass is impossible | Open (Sentinel not built) | Bypass-attempt tests |
 | WARN-A-005 | CRITICAL | PREVENTIVE | Authentication or authorization bypassed to make a feature work | Auth, RBAC | Unauthorized access | Never weaken checks; review any change touching auth | Open | Permission tests |
 | WARN-A-006 | CRITICAL | PREVENTIVE | Overwriting or discarding user changes (hard reset, force push, checkout of modified files) | Repo working tree | Lost work | Check `git status`; never discard without explicit permission | Open | n/a |
 | WARN-A-007 | HIGH | PREVENTIVE | Running shell commands whose effect is not understood (recursive deletes, piping remote scripts) | Dev environment | Data loss, compromise | Read before running; prefer dry-run; ask when unsure | Open | n/a |
+| WARN-A-008 | HIGH | PREVENTIVE | CI executes third-party GitHub Actions through mutable refs, including TruffleHog `@main` and version tags | CI workflow | A tag or branch can move to changed action code without a reviewed commit change | Pin third-party actions to reviewed commit SHAs and use Dependabot to propose SHA updates | Open; pre-existing workflow risk, not changed in SEC-001 | Reviewed SHA-pinned action references |
 
 ---
 
@@ -94,10 +95,11 @@ Every entry has one **Type**:
 |---|---|---|---|---|---|---|---|---|
 | WARN-E-001 | HIGH | PREVENTIVE | Integration tokens stolen or logged | Connectors | Account takeover on customers' channels | Encrypt at rest; least privilege; rotation; never log | Open | Log scan; token handling review |
 | WARN-E-002 | HIGH | PREVENTIVE | Personal data of customers in logs, fixtures, prompts sent to providers, or docs | Logging, AI calls | Privacy breach | Redact; minimize what is sent to LLM providers; synthetic fixtures | Open | Log and fixture review |
-| WARN-E-003 | MEDIUM | PREVENTIVE | Unvalidated input and file uploads (brand assets, lead forms) | API | Injection, malware, abuse | Validate and size-limit; scan uploads; rate limit | Open | Negative tests |
+| WARN-E-003 | MEDIUM | PREVENTIVE | Unvalidated input and file uploads (brand assets, lead forms) | API | Injection, malware, abuse | Validate and size-limit; scan uploads; rate limit | Partially addressed: global Redis rate limit added in SEC-001; route-specific validation and form abuse tests remain with the relevant feature tasks | Negative tests |
 | WARN-E-004 | MEDIUM | PREVENTIVE | Third-party data sharing without consent or understanding | LLM and platform providers | Legal exposure | Document what data goes to which provider | Open | Data-flow doc |
 | WARN-E-005 | MEDIUM | UNVERIFIED-DEPENDENCY | Applicability of India's data protection law and platform terms to Vistaro is not assessed (R-09) | Whole product | Compliance gaps | `LEGAL-001` | Open | Advisor input |
-| WARN-E-006 | LOW | PREVENTIVE | Session and token handling weaknesses | Auth | Session hijack | Short-lived tokens; secure cookies | Open | Auth review |
+| WARN-E-006 | LOW | PREVENTIVE | Session and token handling weaknesses | Auth | Session hijack | Short-lived tokens; secure cookies; bind CSRF validation to the authenticated session | Partially addressed: tested session-cookie defaults exist; no session issuance or auth flow exists yet; AUTH-001 must bind CSRF tokens to sessions | Auth review |
+| WARN-E-007 | HIGH | UNVERIFIED-DEPENDENCY | Rate-limit client identity behind the hosting proxy is not verified. SEC-001 keys limits on the direct ASGI peer and deliberately ignores forwarded headers | API deployment | Multiple users may share one proxy peer and hit the same limit; trusting spoofable forwarding headers could instead bypass limits | Keep direct-peer identification until the hosting proxy chain is documented and trusted-proxy handling is explicitly configured | Open; verify during `INFRA-001` before staging exposure | Confirmed proxy behavior and tested trusted-proxy configuration, if needed |
 
 ---
 
@@ -120,7 +122,7 @@ Every entry has one **Type**:
 
 ### G.1 Code defects
 
-**None recorded.** No code was inspected. When a defect is found, add it here with the fields below.
+No pre-existing code defect was established by the SEC-001 inspection. The new controls are in review; record any reproducible issue here if later checks find one. Use the fields below for new findings.
 
 Template:
 
@@ -167,3 +169,5 @@ These are real, observed issues in the project record, not hypothetical.
 | 2026-10-23 | PR #1 merged and CI green: closed the CI part of WARN-G-010; Docker Compose remains unverified locally. |
 | 2026-10-23 | `DB-001`: Docker Desktop installed; Postgres service verified via compose and `alembic` upgrade/downgrade/upgrade verified on empty and seeded databases; RLS proven enforced for `vistaro_app`. Narrowed WARN-G-010 to the staging half of `INFRA-001`; noted WARN-B-009 control (transaction-local setting) is designed in but its harness is `TEST-001`. |
 | 2026-10-24 | `TEST-001`: harness proves the WARN-B-009 control works (transaction-local scope does not survive commit) and caught a related defect: on pooled connections the session GUC stays at `''` after commit and the original policy cast errored instead of denying; migration `0002` replaces the policy with a `NULLIF` version. `TEST-001` sabotage check verified: dropping the policy makes three tests fail; restored, they pass. |
+| 2026-10-24 | `SEC-001`: added tested CSRF double-submit and same-origin checks, secure cookie defaults, API security headers, Redis rate limiting, and dependency audits. Added WARN-E-007 for the unverified hosted proxy chain; no forwarded IP header is trusted. |
+| 2026-10-24 | `SEC-001` review identified WARN-A-008: CI third-party actions use mutable refs, including TruffleHog `@main`; SHA pinning remains an open supply-chain hardening item. |

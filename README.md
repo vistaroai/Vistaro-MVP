@@ -58,7 +58,9 @@ pnpm dev
 
 Open <http://localhost:5173>.
 
-The API health check does not need Postgres or Redis to start.
+The API health check does not need Postgres or Redis to start. Other API routes
+use Redis-backed rate limiting and return `503` while Redis is unavailable; run
+the local services before exercising those routes.
 
 ### 2. Database (roles, schema, migrations)
 
@@ -131,7 +133,14 @@ infra/initdb/              one-time role/extension bootstrap for Postgres
 ## Environment variables
 
 Copy `.env.example` to `.env`; it lists names only. Never commit `.env`, keys,
-tokens, or customer data. CI runs a secret scan.
+tokens, or customer data. CI scans for secrets and audits locked Python and
+production JavaScript dependencies. Dependabot checks Python, pnpm, and GitHub
+Actions dependencies weekly.
+
+Browser requests that change state must first obtain a CSRF token from `GET
+/csrf`, keep the response token in memory, and send it in `X-CSRF-Token`. The
+request must come from the configured `WEB_ORIGIN`. This endpoint issues only a
+CSRF token; authentication and session issuance are not implemented.
 
 ## Status
 

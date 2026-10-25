@@ -13,7 +13,7 @@ def export_openapi(target_path: Path) -> None:
     target_path.parent.mkdir(parents=True, exist_ok=True)
     # Deterministic sort and formatting with trailing newline
     content = json.dumps(schema, indent=2, sort_keys=True) + "\n"
-    target_path.write_text(content, encoding="utf-8")
+    target_path.write_text(content, encoding="utf-8", newline="\n")
     sys.stdout.write(f"Exported OpenAPI specification to {target_path}\n")
 
 
