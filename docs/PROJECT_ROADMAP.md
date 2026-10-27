@@ -14,7 +14,7 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 
 | Item | State |
 |---|---|
-| Stage | `REPO-001`, `DB-001`, `TEST-001`, and `API-001` DONE (merged via PRs #1-#4). `SEC-001` `IN_REVIEW` on `sec-001-security-baseline`; local checks recorded in `CLAUDE.md` §12; founder review and PR CI remain. |
+| Stage | `REPO-001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001` DONE (merged via PRs #1-#5). Next: `AUTH-001` (unblocked), `OBS-001` and `UI-001`; `INFRA-001` staging part open. |
 | Competition | DTU SEVA 2026, Stage 1 (deadline: **unknown**, see ACTIVE_TASKS) |
 | Team | Anushka Varshney (frontend and platform), Dimple (AI and backend) |
 | Stack | Bootstrap toolchain verified (FastAPI, React/Vite, uv, pnpm); database, Redis, workers, hosting, and integrations unverified |
@@ -22,11 +22,11 @@ Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Pro
 
 | Category | Items |
 |---|---|
-| 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001`; `DB-001`; `TEST-001`; `API-001` |
-| 2. Implemented but not fully verified | `SEC-001` (implementation and local checks recorded; founder review and PR CI pending) |
+| 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001`; `DB-001`; `TEST-001`; `API-001`; `SEC-001` |
+| 2. Implemented but not fully verified | None |
 | 3. In progress | None |
-| 4. Ready to implement | `INFRA-001`, `OBS-001`, `UI-001`, `AI-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
-| 5. Blocked | `AUTH-001` (waits on `SEC-001`); the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
+| 4. Ready to implement | `AUTH-001`, `OBS-001`, `UI-001`, `INFRA-001` (staging part), `AI-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
+| 5. Blocked | `AUTH-002` (waits on `AUTH-001`), `AI-002`, the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
 | 6. Planned for later | Phases 2 to 5 |
 | 7. Still undecided | First niche, pricing, tagline, embeddings provider (`DEC-005`), LLM model names (`DEC-002` evaluation), name clearance |
 
@@ -93,7 +93,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 | DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | DONE (verified locally and merged via PR #2, 2026-10-24) | DELEGATED |
 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | DONE (merged via PR #4 to `main` at `85d800d`, 2026-10-24; local acceptance checks recorded in `CLAUDE.md` §12) | DELEGATED |
 | TEST-001 | Test harness and generated cross-workspace isolation tests for every tenant table | DB-001 | Test fails if scoping is removed (proves it detects leaks) | The tests themselves | P0 | DONE (verified locally, sabotage proof included; merged via PR #3, 2026-10-24) | DELEGATED |
-| SEC-001 | Security baseline: CSRF, cookie flags, security headers, rate limiting, secret scanning, dependency alerts | API-001 | Each control demonstrated by a test or CI check | Negative tests | P0 | IN_REVIEW (implemented on `sec-001-security-baseline`; local checks recorded in `CLAUDE.md` §12; founder review and PR CI pending) | DELEGATED |
+| SEC-001 | Security baseline: CSRF, cookie flags, security headers, rate limiting, secret scanning, dependency alerts | API-001 | Each control demonstrated by a test or CI check | Negative tests | P0 | DONE (merged via PR #5, 2026-10-25; controls verified live in tests and locally on 2026-10-27, see `CLAUDE.md` §12) | DELEGATED |
 | OBS-001 | Structured logging, Sentry, `agent_runs` and cost recording, budget table | API-001 | Errors reach Sentry; a sample task records tokens and cost; logs contain no secrets | Log scan; sample run | P1 | READY | DELEGATED |
 | UI-001 | Web app shell, routing, auth screens, API client, state patterns | API-001 | Screens handle loading, empty, error; accessibility checks pass | UI tests | P1 | READY | DELEGATED |
 
@@ -101,7 +101,7 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 | ID | Objective and value | Depends on | Acceptance criteria | Required tests | Pri | Status | Approval |
 |---|---|---|---|---|---|---|---|
-| AUTH-001 | Signup, login, logout, email verification, Google sign-in, server-side sessions (F-CORE-01) | DB-001, SEC-001 | Flows work; sessions expire and rotate; passwords hashed with Argon2id | Unit, integration, negative cases | P0 | BLOCKED | APPROVED-SCOPE |
+| AUTH-001 | Signup, login, logout, email verification, Google sign-in, server-side sessions (F-CORE-01) | DB-001, SEC-001 | Flows work; sessions expire and rotate; passwords hashed with Argon2id | Unit, integration, negative cases | P0 | READY | APPROVED-SCOPE |
 | AUTH-002 | Workspaces and server-side tenant scoping (F-CORE-02) | AUTH-001, TEST-001 | Creator becomes owner; switching updates session; every tenant query scoped | Isolation tests | P0 | BLOCKED | APPROVED-SCOPE |
 | AUTH-003 | Roles and permission map; `require(permission)` (F-CORE-04, F-SEN-01) | AUTH-002 | Permission matrix enforced on every route | Generated matrix test | P1 | BLOCKED | APPROVED-SCOPE (role list delegated) |
 
@@ -216,9 +216,9 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 ## 15. Next recommended action
 
-1. Review SEC-001 on `sec-001-security-baseline`; keep it `IN_REVIEW` until its checks and review requirements are satisfied.
-2. Keep `AUTH-001` blocked until SEC-001 is accepted and marked `DONE`; DB-001 is already complete.
-3. `INFRA-001` (staging verification) and the ready non-code tracks can proceed independently.
+1. `AUTH-001` is now `READY` (SEC-001 and DB-001 done). It is the next P0 build task.
+2. In parallel: `OBS-001`, `UI-001` (both were waiting only on API-001), and the non-code tracks (`VAL-001`, `DOC-001`, `NAME-001`, `RES-001`).
+3. `INFRA-001` staging verification remains open and needs founder decisions and platform accounts.
 
 ## 16. Change log
 
@@ -235,3 +235,5 @@ One complete loop, all steps real (test accounts allowed where stated):
 | 2026-10-24 | `API-001`: error envelope and typed exceptions, request-ID middleware, `/healthz` and `/readyz`, OpenAPI export (`scripts/export_openapi.py`), TypeScript client (`openapi-typescript`), cursor-pagination helper, idempotency-key helper. Contract tests: 47 backend tests (ruff ✅, mypy ✅, lint-imports ✅, pytest 47/47 ✅), 3 frontend tests (lint ✅, typecheck ✅, vitest 3/3 ✅, build ✅). CI drift check added: `export-openapi` job + `codegen:check` in `frontend` job. Negative drift test verified (exit 1 on drift, exit 0 after restore). Branch: `api-001-skeleton`. Status: `IN_REVIEW` — awaiting founder review | Claude (delegated) |
 | 2026-10-24 | `API-001` merged to `main` via PR #4 at `85d800d`; SEC-001 dependency satisfied | Claude (delegated) |
 | 2026-10-24 | `SEC-001` implemented on `sec-001-security-baseline`: CSRF token endpoint and validation, environment-aware cookie defaults, security headers/CSP/HSTS, Redis fixed-window rate limits, Python/Node dependency audits and Dependabot updates. Status `IN_REVIEW`; checks and limitations in `CLAUDE.md` §12 | Claude (delegated) |
+| 2026-10-25 | `SEC-001` merged into `main` via PR #5. |
+| 2026-10-27 | Independent audit of `API-001` and `SEC-001` on `main` (Anushka + AI): all suites green (61 backend tests incl. 14 security, lint, mypy, import-linter, vitest 6/6, lint/typecheck/build, OpenAPI no-drift; live smoke of health, readiness, headers, error envelope, CSRF). Audit found a real defect: DB probes hung indefinitely when Postgres was unreachable because `build_engine` set no `connect_timeout` (WARN-B-013); fix prepared on `fix-readyz-connect-timeout`. `SEC-001` marked `DONE`. | Claude (delegated) |

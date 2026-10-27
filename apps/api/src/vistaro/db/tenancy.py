@@ -53,8 +53,16 @@ def admin_database_url() -> str:
 
 
 def build_engine(raw_url: str) -> Engine:
-    """Return an engine for ``raw_url`` using the psycopg 3 driver."""
-    return create_engine(sqlalchemy_url(raw_url))
+    """Return an engine for ``raw_url`` using the psycopg 3 driver.
+
+    libpq can hang indefinitely when the server is unreachable (for example
+    during an outage or when ``/readyz`` probes down dependencies), so every
+    engine bounds its connect with ``connect_timeout``.
+    """
+    return create_engine(
+        sqlalchemy_url(raw_url),
+        connect_args={"connect_timeout": 5},
+    )
 
 
 def set_tenant_scope(connection: Connection, workspace_id: str) -> None:

@@ -7,23 +7,22 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 ## Current task
 
-`SEC-001` is implemented on `sec-001-security-baseline` and remains `IN_REVIEW` pending founder review and CI on a pull request. All feasible local checks and both dependency audits passed; the remote CI and secret-scan job remain unrun.
+`SEC-001` was merged into `main` via PR #5 on 2026-10-25 and independently verified on 2026-10-27.
 
-**Handover note (2026-10-24):** API-001 was merged to `main` via PR #4 at `85d800d`. SEC-001 is now in review. Do not start AUTH-001 until SEC-001's acceptance and review requirements are satisfied.
+**Audit (2026-10-27):** `API-001` (PR #4) and `SEC-001` (PR #5) were independently audited on `main`: every suite green and both controls verified live against a running server. Both tasks are `DONE`. One defect was found and fixed in the audit: DB probes hung forever when Postgres was unreachable (no `connect_timeout`); see `CLAUDE.md` §12 and WARN-B-013.
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| SEC-001 | Security baseline: CSRF, cookie flags, headers/CSP, Redis rate limiting, secret scan, dependency audits | IN_REVIEW | AI agent | Implemented 2026-10-24 on `sec-001-security-baseline`; local checks recorded in `CLAUDE.md` §12 |
+| AUTH-001 | Signup, login, sessions, email verification, Google sign-in | READY | next builder | Both dependencies (`DB-001`, `SEC-001`) are DONE; P0. Must reuse the tested session-cookie/CSRF defaults from `SEC-001` |
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | OBS-001 | Observability and cost recording | API-001 | READY | Dependency is merged; follow the ordered Wave B sequence after SEC-001 |
-| 2 | UI-001 | Web app shell | API-001 | READY | Dependency is merged; follow the ordered Wave B sequence after SEC-001 |
-| 3 | AUTH-001 | Signup, login, sessions, email verification | DB-001, SEC-001 | BLOCKED | Starts only after SEC-001 is accepted and marked DONE |
-| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
-| 5 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; implementation remains later in Wave D |
+| 1 | OBS-001 | Observability and cost recording | API-001 | READY | |
+| 2 | UI-001 | Web app shell | API-001 | READY | Must fetch/store the `/csrf` token and wire the client CSRF callback |
+| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
+| 4 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
 
 ## Parallel non-code tasks (can start now)
 

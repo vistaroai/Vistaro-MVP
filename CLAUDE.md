@@ -445,7 +445,17 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 
 **Limitations:** hosted proxy behavior is not verified (`WARN-E-007`); all users sharing one direct proxy peer may share a rate-limit bucket. Redis is required for non-health routes and the limiter fails closed. The fixed-window approach can burst across a window boundary. The CI TruffleHog action still references mutable `@main`, as it did before this task. `AUTH-001` must consume the tested session cookie defaults, and `UI-001` must fetch/store the `/csrf` token and provide the client callback.
 
-**Task status:** SEC-001 is `IN_REVIEW`. Do not start AUTH-001 until founder review, branch CI, and documented acceptance requirements are satisfied.
+**Task status:** SEC-001 was merged into `main` via PR #5 on 2026-10-25 and independently verified on 2026-10-27 (see below); it is `DONE`.
+
+---
+
+### Independent audit of API-001 and SEC-001 (main, 2026-10-27)
+
+Ran on `main` at the PR #5 merge with local services up: `ruff` clean, `mypy src` clean (12 files), `lint-imports` kept, `pytest` **61/61 passed** (47 API-001-era + security), frontend `lint`/`typecheck`/`build` exit 0 and Vitest 6/6, `scripts/export_openapi.py` produces no diff against the committed `openapi.json`. Live server smoke on port 8002 verified: `/healthz` 200, `/readyz` `ok` with `database: ok, redis: ok`, `X-Request-ID` set and propagated, CSP/`X-Frame-Options`/`X-Content-Type-Options`/`Referrer-Policy`/`Permissions-Policy` present, 404 body is the standard error envelope, and a valid `/csrf` token + matching `Origin` + `X-CSRF-Token` header passes the CSRF middleware.
+
+**Found and fixed:** `build_engine` (vistaro/db/tenancy.py) set no `connect_timeout`; psycopg/libpq hangs indefinitely when Postgres is unreachable, so `/readyz` hung forever and pytest hung instead of skipping when services were down. Fix: `connect_args={"connect_timeout": 5}` on every engine (WARN-B-013). With services down, `/readyz` now returns 503 quickly.
+
+**Noted, not changed:** the Redis rate limiter fails **closed** (503 on all non-health routes when Redis is down) — founders should confirm this availability trade-off. `check_database()` builds a throwaway engine per readiness call (minor; OBS-001/AUTH-002 can pool it). Ops: Docker Desktop is a user-space install at `%LOCALAPPDATA%\Programs\DockerDesktop\Docker Desktop.exe` and must be running before any local API work.
 
 ---
 
