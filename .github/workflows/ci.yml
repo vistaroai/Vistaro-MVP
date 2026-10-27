@@ -154,7 +154,7 @@ jobs:
         run: pnpm audit --prod --audit-level=high
 
       - name: Download OpenAPI artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: openapi-spec
           path: apps/api
