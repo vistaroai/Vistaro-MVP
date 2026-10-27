@@ -13,7 +13,7 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| AUTH-001 | Signup, login, sessions, email verification, Google sign-in | READY | next builder | Both dependencies (`DB-001`, `SEC-001`) are DONE; P0. Must reuse the tested session-cookie/CSRF defaults from `SEC-001` |
+| AUTH-001 (Phase A) | Signup, login, logout, email verification (Mailpit), server-side sessions | IN_REVIEW | Claude (branch `auth-001-email-session`) | All checks green; founder review, then merge; Phase B (Google) waits on founders' OAuth credentials |
 
 ## Next actionable tasks (in order)
 
