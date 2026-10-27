@@ -1,6 +1,25 @@
 {
   "components": {
     "schemas": {
+      "AuthResponse": {
+        "additionalProperties": false,
+        "description": "Body of signup/login: the user plus the session-bound CSRF token.",
+        "properties": {
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "required": [
+          "user",
+          "csrf_token"
+        ],
+        "title": "AuthResponse",
+        "type": "object"
+      },
       "DependencyChecks": {
         "description": "Breakdown of readiness dependency statuses.",
         "properties": {
@@ -62,6 +81,19 @@
         "title": "ErrorEnvelope",
         "type": "object"
       },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
       "HealthResponse": {
         "description": "Liveness check response.",
         "properties": {
@@ -108,6 +140,109 @@
         ],
         "title": "ReadyResponse",
         "type": "object"
+      },
+      "SignupRequest": {
+        "additionalProperties": false,
+        "description": "Signup payload: an email and a password of at least 10 characters.",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 1024,
+            "minLength": 10,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "SignupRequest",
+        "type": "object"
+      },
+      "UserOut": {
+        "additionalProperties": false,
+        "description": "Public account fields. Never includes ``password_hash``.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_verified": {
+            "title": "Email Verified",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "email_verified"
+        ],
+        "title": "UserOut",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "VerifyResponse": {
+        "additionalProperties": false,
+        "description": "Body of a successful verification link visit.",
+        "properties": {
+          "email_verified": {
+            "title": "Email Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "email_verified"
+        ],
+        "title": "VerifyResponse",
+        "type": "object"
       }
     }
   },
@@ -118,9 +253,253 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/auth/login": {
+      "post": {
+        "description": "Verify Argon2id credentials and mint a fresh session with bound CSRF.\n\nUnknown accounts burn the same Argon2id work as a wrong password so\ntiming cannot enumerate emails.",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Wrong email or password (same envelope for both)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Sign in with an email and password",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "description": "Remove the session row and clear both cookies.\n\nRequires the session-bound CSRF token (enforced by ``CurrentUser`` on\nthis unsafe method).",
+        "operationId": "logout_auth_logout_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Logout Auth Logout Post",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "No valid session"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Delete the current session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "description": "Return the caller's own account summary (no secrets).",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Current account summary",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/signup": {
+      "post": {
+        "description": "Create the ``users`` row unverified, issue a session, email the link.\n\nBy design signup reveals registration truthfully: the duplicate case\nanswers 409 explicitly (the anti-enumeration rule is applied on login).",
+        "operationId": "signup_auth_signup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Email already registered"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Create an account and start a session",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/verify": {
+      "get": {
+        "description": "Consume one verification token and mark the account verified.\n\nAll failure modes (garbage token, expired, reused) return one identical\nenvelope, so nothing about account state leaks through timing or text.\nEmail-link rotation of any live session arrives with the browser flows\n(Phase B); server-side verification is idempotent-safe via ``consumed_at``.",
+        "operationId": "verify_auth_verify_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Invalid, expired, or already-used link"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Confirm an email address with a one-time link",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/csrf": {
       "get": {
-        "description": "Issue a short-lived CSRF double-submit token, not an authenticated session.",
+        "description": "Issue a short-lived CSRF token, re-bound to a live session if present.",
         "operationId": "csrf_token_csrf_get",
         "responses": {
           "200": {

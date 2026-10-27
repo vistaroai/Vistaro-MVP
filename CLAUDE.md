@@ -423,7 +423,7 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 | Cookie defaults | `session_cookie_options` returns `HttpOnly`, `Secure` outside local, and `SameSite=Lax` locally / `None` for staging and production (cross-site Pages-to-API deployment); tested. No session cookie is issued in this task. CSRF cookie is readable by design and has `Path=/`, `Max-Age=3600`, secure environment flags. |
 | Headers | CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` apply to success and error responses. HSTS is set only for `APP_ENV=staging` or `production`; local and test environments omit it. |
 | Rate limiting | Redis Lua fixed-window counter; default 120 requests per direct ASGI peer per 60 seconds. Returns 429 with `Retry-After` and limit headers; returns 503 on Redis errors; `/healthz` and `/readyz` are exempt. `X-Forwarded-For` is not trusted. Tests cover threshold, reset, forwarded-header spoofing, health exemption, backend failure, and invalid configuration. |
-| Dependency and secret checks | CI adds `uv audit --locked` and `pnpm audit --prod --audit-level=high`; Dependabot checks Python, npm/pnpm, and GitHub Actions weekly. TruffleHog remains in CI, now reports verified and unknown findings. Local audits observed no known vulnerabilities. |
+| Dependency and secret checks | CI adds `uv audit --locked` and `pnpm audit --prod --audit-level=high`; TruffleHog remains in CI, now reports verified and unknown findings. Local audits observed no known vulnerabilities. Dependabot version updates were disabled on 2026-10-28 (founders' request: no bot-authored commits); bumps are done manually. |
 
 **Verification results (2026-10-24):**
 
@@ -456,6 +456,17 @@ Ran on `main` at the PR #5 merge with local services up: `ruff` clean, `mypy src
 **Found and fixed:** `build_engine` (vistaro/db/tenancy.py) set no `connect_timeout`; psycopg/libpq hangs indefinitely when Postgres is unreachable, so `/readyz` hung forever and pytest hung instead of skipping when services were down. Fix: `connect_args={"connect_timeout": 5}` on every engine (WARN-B-013). With services down, `/readyz` now returns 503 quickly.
 
 **Noted, not changed:** the Redis rate limiter fails **closed** (503 on all non-health routes when Redis is down) — founders should confirm this availability trade-off. `check_database()` builds a throwaway engine per readiness call (minor; OBS-001/AUTH-002 can pool it). Ops: Docker Desktop is a user-space install at `%LOCALAPPDATA%\Programs\DockerDesktop\Docker Desktop.exe` and must be running before any local API work.
+
+### AUTH-001 Phase A (branch `auth-001-email-session`, 2026-10-28)
+
+Implemented email signup/login/logout/verification and server-side sessions, per the plan approved by the founders (Google sign-in deferred to Phase B pending OAuth credentials). `ruff`, `mypy`, `lint-imports` clean; pytest **88/88** (27 new auth tests); `alembic upgrade/downgrade/upgrade` verified for migration `0003`; OpenAPI re-exported with no drift (`openapi.json` + regenerated `apps/web/src/lib/api/schema.d.ts`); frontend lint/typecheck/build exit 0 and vitest green; live smoke on port 8000: signup → real Mailpit email at `localhost:8025` → verify link → `/auth/me` shows verified → logout with bound CSRF.
+
+Key decisions recorded during build:
+- Tokens (session cookie value and verification link) exist only as SHA-256 digests in the DB (`services/tokens.py`); sessions stay outside RLS scopes and are resolved by user, hashed only (WARN-D-007 note).
+- Login and all verification-link failures return one shared generic envelope; unknown accounts burn the same Argon2id work via `DUMMY_HASH` (`services/passwords.py`).
+- `GET /csrf` re-binds the token to a live session (`api/deps.py::rebind_session_csrf`) — found via live smoke because a mid-session refetch would otherwise poison logout.
+- Test emails use `@example.com` because `email-validator` rejects reserved `.test` domains; `EMAIL_VALIDATOR` dependency added.
+- `conftest.py` raises the rate limit for the whole test process; limiter thresholds are still tested separately with dedicated mini-apps.
 
 ---
 

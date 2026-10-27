@@ -4,12 +4,14 @@ from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 
 import redis
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
 from sqlalchemy import text
 
+from vistaro.api.auth import router as auth_router
+from vistaro.api.deps import rebind_session_csrf
 from vistaro.core.config import settings
 from vistaro.core.errors import ErrorEnvelope, register_error_handlers
 from vistaro.core.middleware import RequestIDMiddleware
@@ -50,6 +52,7 @@ app = FastAPI(
 register_error_handlers(app)
 
 # CORS is outermost so browser clients can read CSRF and rate-limit error envelopes.
+app.include_router(auth_router)
 app.add_middleware(CSRFMiddleware, web_origin=settings.web_origin)
 app.add_middleware(
     RedisRateLimitMiddleware,
@@ -131,9 +134,10 @@ readiness_checkers: dict[str, Callable[[], bool]] = {
 
 
 @app.get("/csrf", summary="Get a CSRF token", tags=["System"])
-def csrf_token(response: Response) -> dict[str, str]:
-    """Issue a short-lived CSRF double-submit token, not an authenticated session."""
+def csrf_token(request: Request, response: Response) -> dict[str, str]:
+    """Issue a short-lived CSRF token, re-bound to a live session if present."""
     token = new_csrf_token()
+    rebind_session_csrf(request, token)
     response.set_cookie(
         key="csrf_token",
         value=token,
@@ -193,3 +197,4 @@ def readyz(response: Response) -> ReadyResponse:
         environment=settings.app_env,
         checks=checks,
     )
+

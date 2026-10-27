@@ -1,5 +1,6 @@
 """Shared fixtures for database-backed tests (TEST-001)."""
 
+import os
 from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Final
@@ -7,8 +8,14 @@ from typing import Final
 import pytest
 from sqlalchemy import Engine, text
 
-from vistaro.core.config import settings
-from vistaro.db.tenancy import admin_database_url, build_engine
+# Auth flow tests fire many POSTs through the real app's limiter; lift the
+# per-peer limit for the whole test process. Threshold behavior itself is
+# tested separately in test_security with a dedicated mini-app and explicit
+# constructor arguments, so this override does not weaken any test.
+os.environ["RATE_LIMIT_REQUESTS"] = "100000"
+
+from vistaro.core.config import settings  # noqa: E402
+from vistaro.db.tenancy import admin_database_url, build_engine  # noqa: E402
 
 WORKSPACE_A_ID: Final[str] = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
 WORKSPACE_B_ID: Final[str] = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
@@ -16,7 +23,7 @@ USER_A_ID: Final[str] = "11111111-1111-1111-1111-111111111111"
 USER_B_ID: Final[str] = "22222222-2222-2222-2222-222222222222"
 
 TRUNCATE_ALL_SQL: Final = (
-    "TRUNCATE sessions, memberships, workspaces, users CASCADE"
+    "TRUNCATE sessions, memberships, workspaces, users, email_verifications CASCADE"
 )
 
 

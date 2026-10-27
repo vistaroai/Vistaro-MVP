@@ -17,11 +17,19 @@ class Settings(BaseSettings):
 
     app_env: str = "local"
     web_origin: str = "http://localhost:5173"
+    api_base_url: str = "http://127.0.0.1:8000"
     database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
     migrator_database_url: str = "postgresql://vistaro:vistaro_local_only@localhost:5432/vistaro"
     redis_url: str = "redis://localhost:6379/0"
     rate_limit_requests: int = Field(default=120, ge=1)
     rate_limit_window_seconds: int = Field(default=60, ge=1)
+    # AUTH-001: sessions and emails.
+    session_lifetime_seconds: int = Field(default=604800, ge=60)
+    verification_token_ttl_seconds: int = Field(default=86400, ge=60)
+    email_from: str = "Vistaro <no-reply@vistaro.local>"
+    smtp_host: str = "localhost"
+    smtp_port: int = Field(default=1025, ge=1)
+    resend_api_key: str = ""
 
 
 @lru_cache

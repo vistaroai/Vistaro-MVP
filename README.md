@@ -134,8 +134,8 @@ infra/initdb/              one-time role/extension bootstrap for Postgres
 
 Copy `.env.example` to `.env`; it lists names only. Never commit `.env`, keys,
 tokens, or customer data. CI scans for secrets and audits locked Python and
-production JavaScript dependencies. Dependabot checks Python, pnpm, and GitHub
-Actions dependencies weekly.
+production JavaScript dependencies; dependency updates are done manually
+(Dependabot version updates are disabled so no bot commits appear in history).
 
 Browser requests that change state must first obtain a CSRF token from `GET
 /csrf`, keep the response token in memory, and send it in `X-CSRF-Token`. The
