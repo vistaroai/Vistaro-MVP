@@ -342,7 +342,7 @@ Mocks and fakes are allowed in tests and must be labeled. Real-provider tests ar
 
 The verified workflow is `.github/workflows/ci.yml`. It audits Python lockfile dependencies with `uv audit --locked`, production pnpm dependencies with `pnpm audit --prod --audit-level=high`, and scans repository history with TruffleHog. Backend and frontend lint, type checks, tests, build, and OpenAPI drift checks remain in CI. These audit commands require network access to vulnerability databases/registries.
 
-`.github/dependabot.yml` checks Python, npm/pnpm, and GitHub Actions dependencies weekly. Dependabot configuration does not enable GitHub's repository-level advisory setting; founders may still need to confirm that setting is enabled in the repository.
+Dependabot version updates are intentionally disabled (`dependabot.yml` removed) so the bot never authors commits; run `uv lock` / `pnpm update` manually when you want bumps. Dependabot configuration did not enable GitHub's repository-level advisory setting; founders should confirm that setting is enabled in the repository.
 
 Deploy workflows: staging deploys on merge to `main`; production requires a manual approval step in GitHub Environments.
 

@@ -423,7 +423,7 @@ Docker Desktop 29.9.2 installed and running; `docker compose -f infra/docker-com
 | Cookie defaults | `session_cookie_options` returns `HttpOnly`, `Secure` outside local, and `SameSite=Lax` locally / `None` for staging and production (cross-site Pages-to-API deployment); tested. No session cookie is issued in this task. CSRF cookie is readable by design and has `Path=/`, `Max-Age=3600`, secure environment flags. |
 | Headers | CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy` apply to success and error responses. HSTS is set only for `APP_ENV=staging` or `production`; local and test environments omit it. |
 | Rate limiting | Redis Lua fixed-window counter; default 120 requests per direct ASGI peer per 60 seconds. Returns 429 with `Retry-After` and limit headers; returns 503 on Redis errors; `/healthz` and `/readyz` are exempt. `X-Forwarded-For` is not trusted. Tests cover threshold, reset, forwarded-header spoofing, health exemption, backend failure, and invalid configuration. |
-| Dependency and secret checks | CI adds `uv audit --locked` and `pnpm audit --prod --audit-level=high`; Dependabot checks Python, npm/pnpm, and GitHub Actions weekly. TruffleHog remains in CI, now reports verified and unknown findings. Local audits observed no known vulnerabilities. |
+| Dependency and secret checks | CI adds `uv audit --locked` and `pnpm audit --prod --audit-level=high`; TruffleHog remains in CI, now reports verified and unknown findings. Local audits observed no known vulnerabilities. Dependabot version updates were disabled on 2026-10-28 (founders' request: no bot-authored commits); bumps are done manually. |
 
 **Verification results (2026-10-24):**
 
