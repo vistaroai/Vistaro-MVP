@@ -466,7 +466,15 @@ Key decisions recorded during build:
 - Login and all verification-link failures return one shared generic envelope; unknown accounts burn the same Argon2id work via `DUMMY_HASH` (`services/passwords.py`).
 - `GET /csrf` re-binds the token to a live session (`api/deps.py::rebind_session_csrf`) — found via live smoke because a mid-session refetch would otherwise poison logout.
 - Test emails use `@example.com` because `email-validator` rejects reserved `.test` domains; `EMAIL_VALIDATOR` dependency added.
-- `conftest.py` raises the rate limit for the whole test process; limiter thresholds are still tested separately with dedicated mini-apps.
+AUTH-001 Phase B: Google sign-in (branch `auth-001-google-oauth`, 2026-11-01)
+
+Implemented Google sign-in via Authlib's Starlette client, per the approved scope. The feature is off by default: with `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` empty, `/auth/google/*` answers 503 `OAUTH_NOT_CONFIGURED` (verified live). `ruff`, `mypy`, `lint-imports` clean; pytest **99/99** (11 new OAuth tests against a `FakeGoogleClient`); `itsdangerous` added as a runtime dependency (required by `SessionMiddleware`); OpenAPI re-exported and the TypeScript client regenerated (`codegen:check` green); web lint/typecheck/test/build exit 0. Live smoke on port 8000 with a real server: `/healthz` 200, `/auth/google/login` 503 with the proper envelope, `/auth/me` 401 `SESSION_INVALID` unchanged, both `/auth/google/*` paths present in `openapi.json`.
+
+Key decisions recorded during build:
+- Anti-forgery `state` lives in a signed Starlette session cookie (`SessionMiddleware`, `settings.session_secret`). Real Google credentials REQUIRE `SESSION_SECRET` -- the API refuses to start otherwise; without credentials the app still starts (ephemeral signing key, feature off).
+- The real client_id/secret only ever arrive via env or the platform secret store; tests never touch the network (`FakeGoogleClient` mirrors Authlib's method surface).
+- Trust model: a Google token proves control of that Google account plus Google-verified email. Matching `sub` = login; existing account with same email and no `google_sub` = link (same proof as confirming an email); account already bound to a DIFFERENT Google `sub` = 409 `OAUTH_ACCOUNT_CONFLICT`; unverified/missing email claims = one generic 400 `OAUTH_FLOW_FAILED` envelope (no account-state leaks).
+- OAuth state/cookies/tokens are never logged; `sub`/email never stored raw beyond `users.google_sub` (added by DB-001's migration, no new migration needed).
 
 ---
 

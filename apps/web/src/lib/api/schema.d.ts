@@ -4,6 +4,55 @@
  */
 
 export interface paths {
+    "/auth/google/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Finish Google sign-in
+         * @description Exchange the code, resolve the user, mint a session like login does.
+         *
+         *     All failures (bad/outdated state, provider errors, missing/unverified
+         *     email claims) share one generic envelope so nothing about the account
+         *     leaks. The redirect to the web app lands with UI-001; for now the JSON
+         *     body + cookies are the end of the flow.
+         */
+        get: operations["google_callback_auth_google_callback_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/google/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start Google sign-in
+         * @description Redirect the browser to Google's consent screen (or answer 503).
+         *
+         *     Authlib stores the anti-forgery ``state`` in the signed Starlette session
+         *     (``SessionMiddleware`` with ``settings.session_secret``) and re-checks it
+         *     during the token exchange, so this route needs no extra cookies.
+         */
+        get: operations["google_login_auth_google_login_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -330,6 +379,78 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    google_callback_auth_google_callback_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+            /** @description Generic sign-in failure envelope */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    google_login_auth_google_login_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Google credentials missing (feature off) */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     login_auth_login_post: {
         parameters: {
             query?: never;

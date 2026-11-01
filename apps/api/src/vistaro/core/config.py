@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     smtp_host: str = "localhost"
     smtp_port: int = Field(default=1025, ge=1)
     resend_api_key: str = ""
+    # AUTH-001 Phase B: Google sign-in (empty = feature off, endpoints answer 503).
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    session_secret: str = ""
 
 
 @lru_cache

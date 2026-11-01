@@ -253,6 +253,74 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/auth/google/callback": {
+      "get": {
+        "description": "Exchange the code, resolve the user, mint a session like login does.\n\nAll failures (bad/outdated state, provider errors, missing/unverified\nemail claims) share one generic envelope so nothing about the account\nleaks. The redirect to the web app lands with UI-001; for now the JSON\nbody + cookies are the end of the flow.",
+        "operationId": "google_callback_auth_google_callback_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "Generic sign-in failure envelope"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Finish Google sign-in",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/auth/google/login": {
+      "get": {
+        "description": "Redirect the browser to Google's consent screen (or answer 503).\n\nAuthlib stores the anti-forgery ``state`` in the signed Starlette session\n(``SessionMiddleware`` with ``settings.session_secret``) and re-checks it\nduring the token exchange, so this route needs no extra cookies.",
+        "operationId": "google_login_auth_google_login_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          },
+          "503": {
+            "description": "Google credentials missing (feature off)"
+          }
+        },
+        "summary": "Start Google sign-in",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
     "/auth/login": {
       "post": {
         "description": "Verify Argon2id credentials and mint a fresh session with bound CSRF.\n\nUnknown accounts burn the same Argon2id work as a wrong password so\ntiming cannot enumerate emails.",

@@ -13,7 +13,7 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| AUTH-001 (Phase A) | Signup, login, logout, email verification (Mailpit), server-side sessions | IN_REVIEW | Claude (branch `auth-001-email-session`) | All checks green; founder review, then merge; Phase B (Google) waits on founders' OAuth credentials |
+| AUTH-001 (Phase B) | Google sign-in via Authlib (`/auth/google/login`, `/auth/google/callback`); feature off (503) until founders configure OAuth | IN_REVIEW | Claude (branch `auth-001-google-oauth`) | All checks green with a FAKE provider (99/99 tests); founder review, then merge; real credentials plug in via env/secret store — the founders own the Google Cloud Console step |
 
 ## Next actionable tasks (in order)
 

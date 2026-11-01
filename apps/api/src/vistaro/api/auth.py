@@ -1,6 +1,4 @@
-"""AUTH-001 (Phase A): email signup, login, logout, verification, sessions.
-
-Google sign-in lands in Phase B once the founders create OAuth credentials.
+"""AUTH-001: email signup/login/verification (Phase A) + Google sign-in (Phase B).
 
 Design contract:
 - Passwords: Argon2id via ``services.passwords`` (no hand-rolled crypto).
@@ -21,13 +19,20 @@ import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, Response
+from authlib.integrations.base_client.errors import OAuthError
+from fastapi import APIRouter, Request, Response
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from sqlalchemy import Connection, text
 
 from vistaro.api.deps import SESSION_COOKIE_NAME, CurrentUser, _session_engine
 from vistaro.core.config import settings
-from vistaro.core.errors import BadRequestError, ConflictError, UnauthorizedError
+from vistaro.core.errors import (
+    BadRequestError,
+    ConflictError,
+    ServiceUnavailableError,
+    UnauthorizedError,
+)
 from vistaro.core.security import (
     CSRF_COOKIE_NAME,
     csrf_cookie_options,
@@ -35,6 +40,11 @@ from vistaro.core.security import (
     session_cookie_options,
 )
 from vistaro.services.email import build_verification_email, get_email_sender
+from vistaro.services.oauth_client import (
+    GoogleUserInfo,
+    google_client,
+    parse_google_userinfo,
+)
 from vistaro.services.passwords import hash_password, verify_login_attempt
 from vistaro.services.tokens import generate_token, token_digest
 
@@ -179,7 +189,123 @@ def _send_verification(user_id: uuid.UUID, email: str) -> None:
         logger.exception("verification email delivery failed for user %s", user_id)
 
 
-# --- Endpoints ---
+# --- Google sign-in (Phase B) ---
+
+_GOOGLE_INSERT = text(
+    "INSERT INTO users (id, email, password_hash, google_sub, email_verified_at)"
+    " VALUES (:id, :email, NULL, :sub, now())"
+)
+
+
+def _link_or_create_google_user(info: GoogleUserInfo) -> uuid.UUID:
+    """Find, link, or create the account behind a Google-verified identity.
+
+    Trust model (documented decision): a Google token proves control of the
+    Google account and that Google verified the email. We therefore:
+    - reuse the account whose ``google_sub`` matches,
+    - link an existing email-matching account that has no ``google_sub`` yet
+      (the same proof-of-control as confirming an email address),
+    - refuse accounts already bound to a DIFFERENT Google account (409) —
+      the least surprising safe answer for a shared email conflict.
+    Every write happens inside one transaction; the conflict raises before
+    commit, so no partial link is ever stored.
+    """
+    lookup = text("SELECT id, google_sub FROM users WHERE email = :email")
+    with _session_engine().begin() as connection:
+        row = connection.execute(lookup, {"email": info.email}).mappings().first()
+        if row is None:
+            user_id = uuid.uuid4()
+            connection.execute(
+                _GOOGLE_INSERT,
+                {"id": user_id, "email": info.email, "sub": info.sub},
+            )
+            return user_id
+        existing_id = uuid.UUID(str(row["id"]))
+        bound_sub = row["google_sub"]
+        if bound_sub == info.sub:
+            return existing_id
+        if bound_sub is None:
+            connection.execute(
+                text("UPDATE users SET google_sub = :sub WHERE id = :id"),
+                {"sub": info.sub, "id": existing_id},
+            )
+            return existing_id
+        raise ConflictError(
+            "This email is already linked to a different Google account",
+            code="OAUTH_ACCOUNT_CONFLICT",
+        )
+
+
+def _insert_session_sync(user_id: uuid.UUID, csrf_token: str) -> str:
+    """Insert one session row off the event loop; return the raw token."""
+    with _session_engine().begin() as connection:
+        return _insert_session(connection, user_id, csrf_token)
+
+
+@router.get(
+    "/google/login",
+    name="google_login",
+    summary="Start Google sign-in",
+    responses={503: {"description": "Google credentials missing (feature off)"}},
+)
+async def google_login(request: Request) -> Response:
+    """Redirect the browser to Google's consent screen (or answer 503).
+
+    Authlib stores the anti-forgery ``state`` in the signed Starlette session
+    (``SessionMiddleware`` with ``settings.session_secret``) and re-checks it
+    during the token exchange, so this route needs no extra cookies.
+    """
+    client = google_client()
+    if client is None:
+        raise ServiceUnavailableError(
+            "Google sign-in is not configured", code="OAUTH_NOT_CONFIGURED"
+        )
+    redirect_uri = request.url_for("google_callback")
+    # Authlib is untyped; its Starlette client returns a RedirectResponse.
+    redirect_response = await client.authorize_redirect(request, str(redirect_uri))
+    return redirect_response  # type: ignore[no-any-return]
+
+
+@router.get(
+    "/google/callback",
+    name="google_callback",
+    summary="Finish Google sign-in",
+    responses={400: {"description": "Generic sign-in failure envelope"}},
+)
+async def google_callback(request: Request, response: Response) -> AuthResponse:
+    """Exchange the code, resolve the user, mint a session like login does.
+
+    All failures (bad/outdated state, provider errors, missing/unverified
+    email claims) share one generic envelope so nothing about the account
+    leaks. The redirect to the web app lands with UI-001; for now the JSON
+    body + cookies are the end of the flow.
+    """
+    client = google_client()
+    if client is None:
+        raise ServiceUnavailableError(
+            "Google sign-in is not configured", code="OAUTH_NOT_CONFIGURED"
+        )
+    try:
+        token_response = await client.authorize_access_token(request)
+    except OAuthError:
+        # Including the provider's own error text would leak flow internals.
+        raise BadRequestError(
+            "Google sign-in failed", code="OAUTH_FLOW_FAILED"
+        ) from None
+    info = parse_google_userinfo(token_response or {})
+    if info is None:
+        raise BadRequestError("Google sign-in failed", code="OAUTH_FLOW_FAILED")
+    user_id = await run_in_threadpool(_link_or_create_google_user, info)
+    csrf_token = new_csrf_token()
+    session_token = await run_in_threadpool(_insert_session_sync, user_id, csrf_token)
+    _set_auth_cookies(response, session_token, csrf_token)
+    return AuthResponse(
+        user=UserOut(id=str(user_id), email=info.email, email_verified=True),
+        csrf_token=csrf_token,
+    )
+
+
+# --- Endpoints (email flows, Phase A) ---
 
 
 @router.post(
