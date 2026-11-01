@@ -14,6 +14,7 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
 | AUTH-001 (Phase B) | Google sign-in via Authlib (`/auth/google/login`, `/auth/google/callback`); feature off (503) until founders configure OAuth | DONE | Claude (delegated) | Merged into `main` via PR #14 (2026-11-01), CI 4/4 green. 99/99 backend tests (11 new against a FAKE provider), live-smoked off state. Founders own the remaining credential step: Google Cloud Console OAuth client + `SESSION_SECRET` in staging (`.env.example` documents the redirect URI) |
+| AUTH-002 | Workspaces and server-side tenant scoping: create (owner), list, switch (session-stored), members | IN_REVIEW | Claude (branch `auth-002-workspaces`) | All checks green (110/110 incl. isolation + 11 new API tests); live smoke of create/switch/list. One design decision flagged for founders: memberships RLS now also matches `app.user_id` (migration `0004`) so members can list their own workspaces |
 
 ## Next actionable tasks (in order)
 

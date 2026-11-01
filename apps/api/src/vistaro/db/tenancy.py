@@ -5,6 +5,8 @@ onward) share the same tenant-scope helper so application code and the
 isolation tests cannot drift apart.
 """
 
+from collections.abc import Iterator
+from contextlib import contextmanager
 from os import getenv
 from typing import Final
 
@@ -29,6 +31,13 @@ TENANT_TABLE_WORKSPACE_COLUMNS: Final[dict[str, str]] = {
 #: scope (WARN-B-009).
 SET_TENANT_SCOPE_SQL: Final = text(
     "SELECT set_config('app.workspace_id', :workspace_id, true)"
+)
+
+#: Identity scope for the current request's user. Needed for tables whose
+#: rows belong to the user *and* a workspace (memberships): "my workspaces"
+#: runs before any workspace is active. Also transaction-local.
+SET_USER_SCOPE_SQL: Final = text(
+    "SELECT set_config('app.user_id', :user_id, true)"
 )
 
 
@@ -72,3 +81,34 @@ def set_tenant_scope(connection: Connection, workspace_id: str) -> None:
     transaction, which keeps pooled connections safe to reuse.
     """
     connection.execute(SET_TENANT_SCOPE_SQL, {"workspace_id": workspace_id})
+
+
+def set_user_scope(connection: Connection, user_id: str) -> None:
+    """Scope ``connection`` to ``user_id`` for the current transaction.
+
+    Transaction-local like ``set_tenant_scope`` (WARN-B-009); used for
+    user-owned tenant rows such as the caller's own memberships.
+    """
+    connection.execute(SET_USER_SCOPE_SQL, {"user_id": user_id})
+
+
+@contextmanager
+def tenant_session(
+    engine: Engine,
+    *,
+    user_id: str,
+    workspace_id: str | None = None,
+) -> Iterator[Connection]:
+    """Open one transaction already scoped for the caller (AUTH-002 helper).
+
+    Sets ``app.user_id`` always and ``app.workspace_id`` when a workspace is
+    known, using transaction-local GUCs only (WARN-B-009). Repositories built
+    on this helper cannot forget the scope, and the scope dies with the
+    transaction so pooled connections stay clean.
+    Yields the scoped ``Connection``; scope resets when the block ends.
+    """
+    with engine.begin() as connection:
+        set_user_scope(connection, user_id)
+        if workspace_id is not None:
+            set_tenant_scope(connection, workspace_id)
+        yield connection

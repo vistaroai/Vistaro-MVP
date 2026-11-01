@@ -1,6 +1,27 @@
 {
   "components": {
     "schemas": {
+      "AddMemberRequest": {
+        "additionalProperties": false,
+        "description": "Payload: the account email plus the role to grant.",
+        "properties": {
+          "email": {
+            "format": "email",
+            "title": "Email",
+            "type": "string"
+          },
+          "role": {
+            "default": "editor",
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "title": "AddMemberRequest",
+        "type": "object"
+      },
       "AuthResponse": {
         "additionalProperties": false,
         "description": "Body of signup/login: the user plus the session-bound CSRF token.",
@@ -113,6 +134,24 @@
           "environment"
         ],
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "MemberList": {
+        "additionalProperties": false,
+        "description": "All members of the workspace.",
+        "properties": {
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceMember"
+            },
+            "title": "Members",
+            "type": "array"
+          }
+        },
+        "required": [
+          "members"
+        ],
+        "title": "MemberList",
         "type": "object"
       },
       "ReadyResponse": {
@@ -242,6 +281,97 @@
           "email_verified"
         ],
         "title": "VerifyResponse",
+        "type": "object"
+      },
+      "WorkspaceCreate": {
+        "additionalProperties": false,
+        "description": "Payload: the new workspace's display name.",
+        "properties": {
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "WorkspaceCreate",
+        "type": "object"
+      },
+      "WorkspaceList": {
+        "additionalProperties": false,
+        "description": "All workspaces the caller belongs to.",
+        "properties": {
+          "workspaces": {
+            "items": {
+              "$ref": "#/components/schemas/WorkspaceOut"
+            },
+            "title": "Workspaces",
+            "type": "array"
+          }
+        },
+        "required": [
+          "workspaces"
+        ],
+        "title": "WorkspaceList",
+        "type": "object"
+      },
+      "WorkspaceMember": {
+        "additionalProperties": false,
+        "description": "One member of a workspace (emails are shared with co-members).",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "user_id",
+          "email",
+          "role"
+        ],
+        "title": "WorkspaceMember",
+        "type": "object"
+      },
+      "WorkspaceOut": {
+        "additionalProperties": false,
+        "description": "A workspace plus the caller's role in it.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "role",
+          "created_at"
+        ],
+        "title": "WorkspaceOut",
         "type": "object"
       }
     }
@@ -672,6 +802,262 @@
         "summary": "Readiness check",
         "tags": [
           "System"
+        ]
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "description": "List every workspace the caller has a membership row for.\n\nRuns with only the user GUC: RLS's user branch scopes the read, so the\ncaller sees exactly their own memberships even though the query has no\nexplicit workspace filter.",
+        "operationId": "list_workspaces_workspaces_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "List the workspaces I belong to",
+        "tags": [
+          "Workspaces"
+        ]
+      },
+      "post": {
+        "description": "Create the workspace and one owner membership in one transaction.\n\nThe membership INSERT is gated by RLS ``WITH CHECK``: the transaction's\nworkspace GUC is therefore set to the NEW id before the insert, proving\nthe same policy future member-grants rely on.",
+        "operationId": "create_workspace_workspaces_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Create a workspace (creator becomes owner)",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/workspaces/{workspace_id}/members": {
+      "get": {
+        "description": "List members of a workspace the caller belongs to.\n\nOther members' emails are shared with co-members by design (collaboration\nsurface); flagged for the founders in the review notes.",
+        "operationId": "list_members_workspaces__workspace_id__members_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Not a member (generic, no existence leak)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "List the workspace's members",
+        "tags": [
+          "Workspaces"
+        ]
+      },
+      "post": {
+        "description": "Grant a role to an existing account within the caller's workspace.\n\nAuthorization (MVP rule): the actor needs the ``owner`` or ``admin``\nrole. The INSERT runs with the workspace GUC set, so RLS WITH CHECK\nwould reject a cross-workspace grant even if authorization regressed.\nReturns the full member list so the client stays consistent.",
+        "operationId": "add_member_workspaces__workspace_id__members_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddMemberRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberList"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Already a member"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Add a member (owner/admin only; AUTH-003 formalizes permissions)",
+        "tags": [
+          "Workspaces"
+        ]
+      }
+    },
+    "/workspaces/{workspace_id}/switch": {
+      "post": {
+        "description": "Set ``sessions.active_workspace_id`` for the current session.\n\nRequires a live membership (resolved in the same transaction as the\nupdate, so a race cannot grant a stale role). Non-members and\nnonexistent workspaces return the same 404 as the context dependency.\nThe workspace becomes effective for FUTURE requests in this session.",
+        "operationId": "switch_workspace_workspaces__workspace_id__switch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workspace_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Workspace Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Make this workspace the session's active workspace",
+        "tags": [
+          "Workspaces"
         ]
       }
     }

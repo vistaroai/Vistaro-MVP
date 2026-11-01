@@ -476,6 +476,18 @@ Key decisions recorded during build:
 - Trust model: a Google token proves control of that Google account plus Google-verified email. Matching `sub` = login; existing account with same email and no `google_sub` = link (same proof as confirming an email); account already bound to a DIFFERENT Google `sub` = 409 `OAUTH_ACCOUNT_CONFLICT`; unverified/missing email claims = one generic 400 `OAUTH_FLOW_FAILED` envelope (no account-state leaks).
 - OAuth state/cookies/tokens are never logged; `sub`/email never stored raw beyond `users.google_sub` (added by DB-001's migration, no new migration needed).
 
+AUTH-002 workspaces and tenant scoping (branch `auth-002-workspaces`, 2026-11-01)
+
+Implemented workspace create/list/switch/members endpoints per the architecture table (endpoints match `docs/ARCHITECTURE.md` section 10). Migration `0004` extends the memberships RLS policy: a row is visible when `workspace_id = app.workspace_id` OR `user_id = app.user_id` (both GUCs transaction-local), so members can list their own workspaces before any workspace is active. `ruff`, `mypy`, `lint-imports` clean; pytest **110/110** (11 new workspace API tests + all TEST-001 isolation tests still green); OpenAPI + TS client regenerated with `codegen:check` green; live smoke: create 201 -> switch 200 -> list 200.
+
+Key decisions recorded during build:
+- `db/tenancy.py::tenant_session(engine, user_id, workspace_id)` opens one transaction already scoped; every AUTH-002 query runs through it. Future repositories SHOULD reuse it rather than setting GUCs by hand.
+- Generic 404 `WORKSPACE_NOT_FOUND` for nonexistent AND foreign workspaces (playbook allows 404 or 403; identical envelope avoids existence leaks).
+- Switching stores `sessions.active_workspace_id`; the session id/CSRF stay intact (a switch is not an identity change). The UPDATE is user- and digest-scoped (WARN-D-007).
+- Members: MVP rule owner/admin may add; `owner` role NOT assignable via the endpoint until AUTH-003. Added by existing-account email; unknown email answers 404 `USER_NOT_FOUND` — an accepted (documented in the route docstring) existence reveal to trusted admins; an email-invite-token flow can replace it if the founders prefer.
+- Member emails are visible to co-members (collaboration surface), also flagged in the review notes.
+- Nested-TestClient bug discovered while testing: two concurrent TestClients on one app double-run the lifespan and share `app.state.rate_limit_redis` across event loops (async Redis bound to one loop fails in the other). Tests use a single TestClient with explicit cookie swapping; NOT an issue in production where one loop owns the state.
+
 ---
 
 ## 13. Keeping this file small
