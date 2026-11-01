@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import secrets
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 
@@ -9,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from redis.asyncio import Redis
 from sqlalchemy import text
+from starlette.middleware.sessions import SessionMiddleware
 
 from vistaro.api.auth import router as auth_router
 from vistaro.api.deps import rebind_session_csrf
@@ -61,6 +63,23 @@ app.add_middleware(
 )
 app.add_middleware(RequestIDMiddleware)
 app.add_middleware(SecurityHeadersMiddleware, app_env=settings.app_env)
+# Google sign-in state (AUTH-001 Phase B) is kept in a signed session cookie.
+# Added unconditionally but the browser never receives a "session" cookie
+# unless an /auth/google/* route writes OAuth state into it. When Google
+# credentials ARE configured, a real SESSION_SECRET is mandatory — an
+# ephemeral key would break the state check across workers or restarts.
+if settings.google_client_id and settings.google_client_secret:
+    if not settings.session_secret:
+        raise RuntimeError(
+            "SESSION_SECRET must be set when Google sign-in is configured "
+            "(GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET present)."
+        )
+    _session_signing_key = settings.session_secret
+else:
+    # Dev/test fallback: nothing sensitive is stored in this session, and
+    # cookies die with the process, which is acceptable when the feature is off.
+    _session_signing_key = "vistaro-ephemeral-" + secrets.token_urlsafe(24)
+app.add_middleware(SessionMiddleware, secret_key=_session_signing_key)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.web_origin],
