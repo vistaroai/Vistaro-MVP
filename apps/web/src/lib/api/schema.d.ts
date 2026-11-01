@@ -127,7 +127,7 @@ export interface paths {
         };
         /**
          * Get a CSRF token
-         * @description Issue a short-lived CSRF double-submit token, not an authenticated session.
+         * @description Issue a short-lived CSRF token, re-bound to a live session if present.
          */
         get: operations["csrf_token_csrf_get"];
         put?: never;
