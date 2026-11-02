@@ -227,10 +227,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/workspaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the workspaces I belong to
+         * @description List every workspace the caller has a membership row for.
+         *
+         *     Runs with only the user GUC: RLS's user branch scopes the read, so the
+         *     caller sees exactly their own memberships even though the query has no
+         *     explicit workspace filter.
+         */
+        get: operations["list_workspaces_workspaces_get"];
+        put?: never;
+        /**
+         * Create a workspace (creator becomes owner)
+         * @description Create the workspace and one owner membership in one transaction.
+         *
+         *     The membership INSERT is gated by RLS ``WITH CHECK``: the transaction's
+         *     workspace GUC is therefore set to the NEW id before the insert, proving
+         *     the same policy future member-grants rely on.
+         */
+        post: operations["create_workspace_workspaces_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the workspace's members
+         * @description List members of a workspace the caller belongs to.
+         *
+         *     Other members' emails are shared with co-members by design (collaboration
+         *     surface); flagged for the founders in the review notes.
+         */
+        get: operations["list_members_workspaces__workspace_id__members_get"];
+        put?: never;
+        /**
+         * Add a member (owner/admin only; AUTH-003 formalizes permissions)
+         * @description Grant a role to an existing account within the caller's workspace.
+         *
+         *     Authorization (MVP rule): the actor needs the ``owner`` or ``admin``
+         *     role. The INSERT runs with the workspace GUC set, so RLS WITH CHECK
+         *     would reject a cross-workspace grant even if authorization regressed.
+         *     Returns the full member list so the client stays consistent.
+         */
+        post: operations["add_member_workspaces__workspace_id__members_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workspaces/{workspace_id}/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Make this workspace the session's active workspace
+         * @description Set ``sessions.active_workspace_id`` for the current session.
+         *
+         *     Requires a live membership (resolved in the same transaction as the
+         *     update, so a race cannot grant a stale role). Non-members and
+         *     nonexistent workspaces return the same 404 as the context dependency.
+         *     The workspace becomes effective for FUTURE requests in this session.
+         */
+        post: operations["switch_workspace_workspaces__workspace_id__switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AddMemberRequest
+         * @description Payload: the account email plus the role to grant.
+         */
+        AddMemberRequest: {
+            /**
+             * Email
+             * Format: email
+             */
+            email: string;
+            /**
+             * Role
+             * @default editor
+             */
+            role: string;
+        };
         /**
          * AuthResponse
          * @description Body of signup/login: the user plus the session-bound CSRF token.
@@ -307,6 +412,14 @@ export interface components {
             status: string;
         };
         /**
+         * MemberList
+         * @description All members of the workspace.
+         */
+        MemberList: {
+            /** Members */
+            members: components["schemas"]["WorkspaceMember"][];
+        };
+        /**
          * ReadyResponse
          * @description Readiness check response.
          */
@@ -369,6 +482,51 @@ export interface components {
         VerifyResponse: {
             /** Email Verified */
             email_verified: boolean;
+        };
+        /**
+         * WorkspaceCreate
+         * @description Payload: the new workspace's display name.
+         */
+        WorkspaceCreate: {
+            /** Name */
+            name: string;
+        };
+        /**
+         * WorkspaceList
+         * @description All workspaces the caller belongs to.
+         */
+        WorkspaceList: {
+            /** Workspaces */
+            workspaces: components["schemas"]["WorkspaceOut"][];
+        };
+        /**
+         * WorkspaceMember
+         * @description One member of a workspace (emails are shared with co-members).
+         */
+        WorkspaceMember: {
+            /** Email */
+            email: string;
+            /** Role */
+            role: string;
+            /** User Id */
+            user_id: string;
+        };
+        /**
+         * WorkspaceOut
+         * @description A workspace plus the caller's role in it.
+         */
+        WorkspaceOut: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Role */
+            role: string;
         };
     };
     responses: never;
@@ -757,6 +915,215 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReadyResponse"];
+                };
+            };
+        };
+    };
+    list_workspaces_workspaces_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceList"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    create_workspace_workspaces_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    list_members_workspaces__workspace_id__members_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberList"];
+                };
+            };
+            /** @description Not a member (generic, no existence leak) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    add_member_workspaces__workspace_id__members_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddMemberRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemberList"];
+                };
+            };
+            /** @description Already a member */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    switch_workspace_workspaces__workspace_id__switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workspace_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Internal server error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
         };

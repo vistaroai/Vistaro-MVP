@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from vistaro.api.auth import router as auth_router
 from vistaro.api.deps import rebind_session_csrf
+from vistaro.api.workspaces import router as workspaces_router
 from vistaro.core.config import settings
 from vistaro.core.errors import ErrorEnvelope, register_error_handlers
 from vistaro.core.middleware import RequestIDMiddleware
@@ -55,6 +56,7 @@ register_error_handlers(app)
 
 # CORS is outermost so browser clients can read CSRF and rate-limit error envelopes.
 app.include_router(auth_router)
+app.include_router(workspaces_router)
 app.add_middleware(CSRFMiddleware, web_origin=settings.web_origin)
 app.add_middleware(
     RedisRateLimitMiddleware,
