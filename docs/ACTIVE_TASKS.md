@@ -1,7 +1,7 @@
 # ACTIVE TASKS — Vistaro
 
 Execution queue and full ordered task sequence. Definitions and acceptance criteria: `/docs/PROJECT_ROADMAP.md`. Step-by-step instructions per task: `/docs/TASK_PLAYBOOK.md`. Rules: `/CLAUDE.md`.
-Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
+Last updated: 2026-11-02 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 > Status words match the roadmap. If this file and the roadmap disagree, the roadmap wins; fix this file.
 
@@ -13,17 +13,19 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| AUTH-001 (Phase B) | Google sign-in via Authlib (`/auth/google/login`, `/auth/google/callback`); feature off (503) until founders configure OAuth | DONE | Claude (delegated) | Merged into `main` via PR #14 (2026-11-01), CI 4/4 green. 99/99 backend tests (11 new against a FAKE provider), live-smoked off state. Founders own the remaining credential step: Google Cloud Console OAuth client + `SESSION_SECRET` in staging (`.env.example` documents the redirect URI) |
-| AUTH-002 | Workspaces and server-side tenant scoping: create (owner), list, switch (session-stored), members | IN_REVIEW | Claude (branch `auth-002-workspaces`) | All checks green (110/110 incl. isolation + 11 new API tests); live smoke of create/switch/list. One design decision flagged for founders: memberships RLS now also matches `app.user_id` (migration `0004`) so members can list their own workspaces |
+| UI-001 | Web app shell: routing, layout, auth screens, API client session/CSRF wiring, state patterns, Playwright setup | IN_PROGRESS | Claude (delegated) | Chosen by founders over AUTH-003 (2026-11-02). Plan presented and awaiting OK; implementation starts only after founders approve |
+
+Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001` (PRs #1–#5), `AUTH-001` Phase A (PRs #12/#13), `AUTH-001` Phase B (PR #14), `AUTH-002` (PR #15, 2026-11-02) — details in "Recently completed" and `CLAUDE.md` §12.
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | OBS-001 | Observability and cost recording | API-001 | READY | |
-| 2 | UI-001 | Web app shell | API-001 | READY | Must fetch/store the `/csrf` token and wire the client CSRF callback |
-| 3 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets |
-| 4 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
+| 1 | UI-001 | Web app shell | API-001 | IN_PROGRESS | Needs the `/csrf` token wiring into the client callback; plan presented 2026-11-02 |
+| 2 | AUTH-003 | Roles and permission map; `require(permission)` | AUTH-002 | READY (new unblock) | Completes the auth story; required before the first feature module (Wave E) |
+| 3 | OBS-001 | Observability and cost recording | API-001 | READY | Gate for AI-001/AI-002 cost caps |
+| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets — also where Google OAuth credentials + `SESSION_SECRET` land |
+| 5 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
 
 ## Parallel non-code tasks (can start now)
 
@@ -40,8 +42,8 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 | Blocker | Affects | Needed from |
 |---|---|---|
-| `SEC-001` in review | `AUTH-001` | Founders — review security baseline; CI on PR must pass |
 | Docker Compose Postgres is verified locally; the staging half of `INFRA-001` (Render, Cloudflare Pages, secrets) is untouched | `INFRA-001` | Create staging accounts and verify plan, region, `pgvector` during `INFRA-001` |
+| Real OAuth credentials still missing | `AUTH-001` Phase B end-to-end test | Founders: Google Cloud Console OAuth client + `SESSION_SECRET` (staging or `.env`) |
 | SEVA deadline unknown | `SEVA-001` priority | Founders |
 | Full Product Features report not seen | `DOC-001` | Founders |
 | Hosting plan and region unverified | `INFRA-001` | Verification during `INFRA-001` |
@@ -59,6 +61,8 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 | Date | Item | Note |
 |---|---|---|
+| 2026-11-02 | `AUTH-002` merged into `main` via PR #15 | Workspaces, switching, members; migration `0004` (memberships RLS user branch); 110/110 backend tests, CI 4/4; live smoke recorded in `CLAUDE.md` §12 |
+| 2026-11-01 | `AUTH-001` Phase A+B merged (PRs #12/#13, #14) | Email auth + sessions (Phase A), Google sign-in off-by-default (Phase B). CI 4/4 on both merges; real OAuth credentials remain founder-owned |
 | 2026-10-24 | `SEC-001` implementation | Branch `sec-001-security-baseline`; CSRF, cookie defaults, response headers, Redis rate limiting, dependency audit CI; `IN_REVIEW`. See `CLAUDE.md` §12 |
 | 2026-10-24 | `API-001` implemented and merged via PR #4 | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. Local acceptance checks recorded in `CLAUDE.md` §12. Status: DONE |
 | 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
@@ -75,7 +79,7 @@ Last updated: 2026-10-24 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
 
 ## Next recommended action
 
-Review SEC-001 on `sec-001-security-baseline` and confirm its CI checks. Only after SEC-001 is accepted and marked `DONE` does AUTH-001 become unblocked. INFRA-001 and the ready non-code tracks can proceed independently.
+`UI-001` is in progress: plan branch `ui-001-web-shell` after the founders' OK; review the PR when pushed. `AUTH-003`, `OBS-001`, and non-code tracks can run in parallel; the staging half of `INFRA-001` waits on the founders' Render/Cloudflare accounts.
 
 ## Full execution sequence (all tasks, in order)
 
