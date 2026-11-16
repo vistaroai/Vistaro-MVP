@@ -1,5 +1,6 @@
 import createFetchClient, { type Client } from 'openapi-fetch'
 import type { paths } from './schema.d.ts'
+import { readCsrfCookie } from './csrf'
 
 export type ApiClient = Client<paths>
 
@@ -50,4 +51,8 @@ export function createApiClient(options: CreateApiClientOptions = {}): ApiClient
   return client
 }
 
-export const api = createApiClient()
+export const api = createApiClient({
+  // Read the cookie at request time (see csrf.ts): auth responses rewrite it,
+  // so the header always pairs with the cookie the browser is about to send.
+  getCsrfToken: readCsrfCookie,
+})
