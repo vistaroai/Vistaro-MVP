@@ -10,8 +10,8 @@ AUTH-001 needs:
   session (WARN-E-006 follow-through from SEC-001): after login the double
   submit token is validated against the hash stored on the session row.
 
-Migrations run as ``vistaro_migrator`` (ALEMBIC, WARN-C-003 pattern); the
-application role receives only row CRUD on the new table.
+Migrations run as ``vistaro_migrator``; the application role receives only
+row CRUD on the new table.
 """
 
 from alembic import op

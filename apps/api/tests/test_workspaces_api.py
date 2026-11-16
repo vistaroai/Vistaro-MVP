@@ -12,91 +12,14 @@ import uuid
 from collections.abc import Iterator
 
 import pytest
-from fastapi.testclient import TestClient
+from conftest import UserSession
 from sqlalchemy import Engine, text
-
-from vistaro.api.deps import SESSION_COOKIE_NAME
-from vistaro.core.security import CSRF_COOKIE_NAME
-from vistaro.main import app as api_app
-
-ORIGIN = "http://localhost:5173"
-PASSWORD = "correct-horse-battery-staple"
-
-
-class UserSession:
-    """One account's cookie pair over the single shared TestClient."""
-
-    def __init__(self, client: TestClient, email: str) -> None:
-        self.client = client
-        self.email = email
-        self.session_token: str = ""
-        self.csrf_token: str = ""
-
-    def _apply_cookies(self) -> None:
-        # Clearing prevents duplicate cookies; empty domain because httpx's
-        # default policy rejects a named domain for a dotless test host.
-        self.client.cookies.clear()
-        self.client.cookies.set(
-            SESSION_COOKIE_NAME, self.session_token, domain="", path="/"
-        )
-        self.client.cookies.set(
-            CSRF_COOKIE_NAME, self.csrf_token, domain="", path="/"
-        )
-
-    def refresh_csrf(self) -> None:
-        """Fetch a fresh CSRF pair bound to THIS session only."""
-        self._apply_cookies()
-        response = self.client.get("/csrf")
-        assert response.status_code == 200, response.text
-        token = response.json()["csrf_token"]
-        # Response sets the CSRF cookie; read the value back from the jar
-        # because re-binding always pairs cookie with header.
-        self.csrf_token = token
-
-    def signup(self) -> None:
-        """Register the account and keep its session + CSRF tokens."""
-        self.client.cookies.clear()
-        csrf = self.client.get("/csrf").json()["csrf_token"]
-        response = self.client.post(
-            "/auth/signup",
-            json={"email": self.email, "password": PASSWORD},
-            headers={"Origin": ORIGIN, "X-CSRF-Token": csrf},
-        )
-        assert response.status_code == 201, response.text
-        self.session_token = str(self.client.cookies.get(SESSION_COOKIE_NAME))
-        self.refresh_csrf()  # binds to this new session
-
-    def get(self, path: str) -> object:
-        self._apply_cookies()
-        return self.client.get(path)
-
-    def post(self, path: str, json: object = None) -> object:
-        self._apply_cookies()
-        headers = {"Origin": ORIGIN, "X-CSRF-Token": self.csrf_token}
-        return self.client.post(path, json=json, headers=headers)
 
 
 @pytest.fixture(name="ws")
-def fixture_ws(
-    app_engine: Engine, admin_engine: Engine
-) -> Iterator[dict[str, UserSession]]:
-    """Fresh account tables; yields two account handles on one TestClient."""
-    with admin_engine.begin() as connection:
-        connection.execute(
-            text("TRUNCATE sessions, email_verifications, users CASCADE")
-        )
-    try:
-        with TestClient(app=api_app, base_url="http://testserver") as client:
-            a = UserSession(client, "user-0@example.com")
-            b = UserSession(client, "user-1@example.com")
-            for session in (a, b):
-                session.signup()
-            yield {"a": a, "b": b}
-    finally:
-        with admin_engine.begin() as connection:
-            connection.execute(
-                text("TRUNCATE sessions, email_verifications, users CASCADE")
-            )
+def fixture_ws(signed_up_users: list[UserSession]) -> Iterator[dict[str, UserSession]]:
+    """Two account handles on one TestClient: 'a' creates, 'b' is invited."""
+    yield {"a": signed_up_users[0], "b": signed_up_users[1]}
 
 
 def create_workspace(handle: UserSession, name: str) -> dict[str, object]:
@@ -220,7 +143,7 @@ def test_member_add_requires_owner_or_admin(
     )
     assert denied.status_code == 403  # type: ignore[attr-defined]
     assert (
-        denied.json()["error"]["code"] == "MEMBER_ADD_NOT_ALLOWED"  # type: ignore[attr-defined]
+        denied.json()["error"]["code"] == "PERMISSION_DENIED"  # type: ignore[attr-defined]
     )
 
 

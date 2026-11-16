@@ -12,12 +12,15 @@ Design contract:
 - Switching stores the workspace on the session row (sessions are user-scoped
   by code and digest, WARN-D-007); switching does NOT change identity, so the
   session id and CSRF binding stay intact.
-- Member management (AUTH-003 formalizes the full role/permission map): the
-  MVP rule is owner/admin may add members; the ``owner`` role itself is not
-  assignable here. Added by email; unknown email answers 404, which
-  explicitly reveals account existence to trusted workspace admins (signup
-  already answers 409) — the email-invite-token flow can replace this if the
-  founders prefer no such leak.
+- Member management is governed by the single permission map in
+  ``vistaro.sentinel.permissions`` (AUTH-003): the ``members.add``
+  permission is granted to ``owner`` and ``admin`` only, and the route
+  enforces it through the ``require_permission`` dependency instead of an
+  inline role list. The ``owner`` role itself is not assignable here.
+  Added by email; unknown email answers 404, which explicitly reveals
+  account existence to trusted workspace admins (signup already answers
+  409) — the email-invite-token flow can replace this if the founders
+  prefer no such leak.
 
 Sessions and memberships are the tenant tables touched; the registry
 ``TENANT_TABLE_WORKSPACE_COLUMNS`` already covers memberships (TEST-001).
@@ -25,20 +28,22 @@ Sessions and memberships are the tenant tables touched; the registry
 
 import uuid
 from datetime import datetime
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from sqlalchemy import text
 
 from vistaro.api.deps import (
     CurrentUser,
+    WorkspaceContext,
     WorkspaceContextDep,
     _session_engine,
+    require_permission,
 )
 from vistaro.core.errors import (
     ConflictError,
-    ForbiddenError,
     NotFoundError,
 )
 from vistaro.db.tenancy import set_tenant_scope, set_user_scope, tenant_session
@@ -210,7 +215,11 @@ def list_workspaces(user: CurrentUser) -> WorkspaceList:
     summary="Make this workspace the session's active workspace",
 )
 def switch_workspace(
-    workspace_id: UUID, user: CurrentUser
+    workspace_id: UUID,
+    user: CurrentUser,
+    _allowed: Annotated[
+        WorkspaceContext, Depends(require_permission("workspace.read"))
+    ],
 ) -> WorkspaceOut:
     """Set ``sessions.active_workspace_id`` for the current session.
 
@@ -256,8 +265,17 @@ def switch_workspace(
     summary="List the workspace's members",
     responses={404: {"description": "Not a member (generic, no existence leak)"}},
 )
-def list_members(context: WorkspaceContextDep) -> MemberList:
+def list_members(
+    context: WorkspaceContextDep,
+    _allowed: Annotated[
+        WorkspaceContext, Depends(require_permission("workspace.read"))
+    ],
+) -> MemberList:
     """List members of a workspace the caller belongs to.
+
+    Every member of a workspace may read it and list its members (the
+    collaboration surface). The permission comes from the single map in
+    vistaro.sentinel.permissions, not from an inline role check.
 
     Other members' emails are shared with co-members by design (collaboration
     surface); flagged for the founders in the review notes.
@@ -295,20 +313,22 @@ def _list_members_of(workspace_id: str) -> MemberList:
     responses={409: {"description": "Already a member"}},
 )
 def add_member(
-    context: WorkspaceContextDep, request_data: AddMemberRequest
+    context: WorkspaceContextDep,
+    _allowed: Annotated[
+        WorkspaceContext, Depends(require_permission("members.add"))
+    ],
+    request_data: AddMemberRequest,
 ) -> MemberList:
     """Grant a role to an existing account within the caller's workspace.
 
-    Authorization (MVP rule): the actor needs the ``owner`` or ``admin``
-    role. The INSERT runs with the workspace GUC set, so RLS WITH CHECK
-    would reject a cross-workspace grant even if authorization regressed.
+    Authorization comes from the single permission map in
+    vistaro.sentinel.permissions: the actor must carry the members.add
+    permission, which the map grants to owner and admin only. No role list
+    is repeated here.
+    The INSERT runs with the workspace GUC set, so RLS WITH CHECK would reject
+    a cross-workspace grant even if authorization regressed.
     Returns the full member list so the client stays consistent.
     """
-    if context.role not in ("owner", "admin"):
-        raise ForbiddenError(
-            "Only owners and admins can add members",
-            code="MEMBER_ADD_NOT_ALLOWED",
-        )
     with tenant_session(
         _session_engine(),
         user_id=context.user_id,

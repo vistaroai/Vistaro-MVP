@@ -19,6 +19,7 @@ from vistaro.core.config import settings
 from vistaro.core.errors import ForbiddenError, NotFoundError, UnauthorizedError
 from vistaro.core.security import CSRF_COOKIE_NAME, CSRF_HEADER_NAME, SAFE_METHODS
 from vistaro.db.tenancy import build_engine, set_user_scope
+from vistaro.sentinel.permissions import require as require_permission_check
 from vistaro.services.tokens import token_digest
 
 SESSION_COOKIE_NAME = "vistaro_session"
@@ -188,3 +189,47 @@ def rebind_session_csrf(request: Request, token: str) -> None:
         )
 
 WorkspaceContextDep = Annotated[WorkspaceContext, Depends(get_workspace_context)]
+
+
+class PermissionGuard:
+    """A FastAPI dependency that enforces one permission (AUTH-003).
+
+    Built by ``require_permission``. FastAPI calls it like any other
+    dependency; it resolves the caller's workspace context (the same cached
+    one the route already asks for) and calls
+    ``vistaro.sentinel.permissions.require``, which raises ``ForbiddenError``
+    (HTTP 403, code ``PERMISSION_DENIED``) when the caller's role does not
+    carry the permission.
+
+    ``permission`` is a public attribute so the generated matrix test can read
+    the live route table and prove that every protected route enforces
+    exactly the permission the registry claims.
+    """
+
+    def __init__(self, permission: str) -> None:
+        self.permission = permission
+
+    async def __call__(self, context: WorkspaceContextDep) -> WorkspaceContext:
+        require_permission_check(context.role, self.permission, context.workspace_id)
+        return context
+
+
+def require_permission(permission: str) -> PermissionGuard:
+    """Build the FastAPI dependency that enforces one permission (AUTH-003).
+
+    Use it on a route to require a permission from the single map in
+    ``vistaro.sentinel.permissions``::
+
+        @router.post("/thing")
+        def thing(
+            context: WorkspaceContextDep,
+            _allowed: Annotated[
+                WorkspaceContext, Depends(require_permission("members.add"))
+            ],
+        ) -> ...:
+            ...
+
+    The decision always comes from the map; no route repeats a role list.
+    """
+    return PermissionGuard(permission)
+
