@@ -180,6 +180,11 @@ Tagline candidates generated, none chosen: "Set the goal. We handle the rest."; 
 | D-014 | Competitor monitoring lives in Pulse (resolves OQ-06) | Matches Pulse's listening and performance role | `CONFIRMED` (by delegation) | `PUL-005`, feeds Clarity and Muse via services |
 | D-015 | LLM: provider-agnostic interface with Anthropic default; model names chosen after evaluation (`DEC-002`) | Swappable, evaluation before commitment | `CONFIRMED` as default; model names `UNKNOWN` | Disclosed conflict of interest in ARCHITECTURE.md |
 | D-016 | Full roadmap with task IDs, acceptance criteria and phases 0 to 5 is in `docs/PROJECT_ROADMAP.md` | Founders asked for a final roadmap | `CONFIRMED` (by delegation) | This document's §10 is a summary; the roadmap file is authoritative for tasks |
+| D-017 | Tenant scoping runs through a single `tenant_session(user_id, workspace_id)` wrapper that opens one transaction with `set_config(app.workspace_id, …, true)` (transaction-local, `NULLIF` guard for the empty GUC); `DATABASE_URL` connects as the unprivileged `vistaro_app` role, never the migrator/owner | `DB-001` + `TEST-001` proved pooling and RLS; app-level scoping must not rely on connection lifetime | `CONFIRMED` (by implementation, 2026-10-24) | Every tenant query goes through `vistaro/db/tenancy.py`; RLS on `memberships` only; `workspaces`/`users`/`sessions` unscoped by policy (documented exception) |
+| D-018 | Sessions and credentials are opaque tokens stored only as SHA-256 digests; signup, login, and verification failures share one generic envelope with equalized unknown-account timing (`DUMMY_HASH`); CSRF tokens are session-bound | OWASP session/CSRF guidance; account enumeration resistance | `CONFIRMED` (by implementation, 2026-10-28) | `AUTH-001` design; see `CLAUDE.md` §12 |
+| D-019 | **No bot-authored commits.** Dependabot's config was removed on 2026-10-28 at the founders' request; dependency bumps are manual (`uv lock` / `pnpm update`); Dependabot security *alerts* stay available in Settings | Founders' explicit instruction 2026-10-28 | `CONFIRMED` (by founders) | Dependency updates are manual review items, tracked in CI via `uv audit --locked` and `pnpm audit` |
+| D-020 | Sentinel authorization decisions always come from the single permission map in `vistaro/sentinel/permissions.py`; routes use the `require_permission` dependency and never repeat role lists inline | `ARCHITECTURE.md` §5/§6 ("Role-to-action map lives in one file"); WARN-B-001/B-006 | `CONFIRMED` (2026-11-16) | `AUTH-003`; `SEN-001` must extend the same map, not add a second source of role truth |
+| D-021 | Per-task verification evidence is recorded in `CLAUDE.md` §12/§12b at task end, and `docs/PROJECT_ROADMAP.md` is the single source of truth for task status | Founders' standing request for an auditable record | `CONFIRMED` (by founders, 2026-10-23+) | Every merge has a matching recorded record; auditors can reconstruct the project from `git log` + `docs/` |
 
 ### 2.7 Open questions
 
@@ -1292,7 +1297,7 @@ Final decisions are in `docs/ARCHITECTURE.md`. "DECIDED" means decided by delega
 
 ### 15.4 Decision register
 
-See §2.6 (D-001 to D-016).
+See §2.6 (D-001 to D-021).
 
 ### 15.5 Risk register
 
