@@ -889,7 +889,7 @@
     },
     "/workspaces/{workspace_id}/members": {
       "get": {
-        "description": "List members of a workspace the caller belongs to.\n\nOther members' emails are shared with co-members by design (collaboration\nsurface); flagged for the founders in the review notes.",
+        "description": "List members of a workspace the caller belongs to.\n\nEvery member of a workspace may read it and list its members (the\ncollaboration surface). The permission comes from the single map in\nvistaro.sentinel.permissions, not from an inline role check.\n\nOther members' emails are shared with co-members by design (collaboration\nsurface); flagged for the founders in the review notes.",
         "operationId": "list_members_workspaces__workspace_id__members_get",
         "parameters": [
           {
@@ -943,7 +943,7 @@
         ]
       },
       "post": {
-        "description": "Grant a role to an existing account within the caller's workspace.\n\nAuthorization (MVP rule): the actor needs the ``owner`` or ``admin``\nrole. The INSERT runs with the workspace GUC set, so RLS WITH CHECK\nwould reject a cross-workspace grant even if authorization regressed.\nReturns the full member list so the client stays consistent.",
+        "description": "Grant a role to an existing account within the caller's workspace.\n\nAuthorization comes from the single permission map in\nvistaro.sentinel.permissions: the actor must carry the members.add\npermission, which the map grants to owner and admin only. No role list\nis repeated here.\nThe INSERT runs with the workspace GUC set, so RLS WITH CHECK would reject\na cross-workspace grant even if authorization regressed.\nReturns the full member list so the client stays consistent.",
         "operationId": "add_member_workspaces__workspace_id__members_post",
         "parameters": [
           {
@@ -1017,7 +1017,6 @@
             "name": "workspace_id",
             "required": true,
             "schema": {
-              "format": "uuid",
               "title": "Workspace Id",
               "type": "string"
             }

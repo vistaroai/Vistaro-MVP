@@ -270,6 +270,10 @@ export interface paths {
          * List the workspace's members
          * @description List members of a workspace the caller belongs to.
          *
+         *     Every member of a workspace may read it and list its members (the
+         *     collaboration surface). The permission comes from the single map in
+         *     vistaro.sentinel.permissions, not from an inline role check.
+         *
          *     Other members' emails are shared with co-members by design (collaboration
          *     surface); flagged for the founders in the review notes.
          */
@@ -279,9 +283,12 @@ export interface paths {
          * Add a member (owner/admin only; AUTH-003 formalizes permissions)
          * @description Grant a role to an existing account within the caller's workspace.
          *
-         *     Authorization (MVP rule): the actor needs the ``owner`` or ``admin``
-         *     role. The INSERT runs with the workspace GUC set, so RLS WITH CHECK
-         *     would reject a cross-workspace grant even if authorization regressed.
+         *     Authorization comes from the single permission map in
+         *     vistaro.sentinel.permissions: the actor must carry the members.add
+         *     permission, which the map grants to owner and admin only. No role list
+         *     is repeated here.
+         *     The INSERT runs with the workspace GUC set, so RLS WITH CHECK would reject
+         *     a cross-workspace grant even if authorization regressed.
          *     Returns the full member list so the client stays consistent.
          */
         post: operations["add_member_workspaces__workspace_id__members_post"];
