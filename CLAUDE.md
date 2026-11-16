@@ -513,6 +513,40 @@ Key decisions recorded during build:
 
 ---
 
+### AUTH-003 — Roles and permission map (implemented 2026-11-16)
+
+**What was built:** a single role-to-permission map at `apps/api/src/vistaro/sentinel/permissions.py`, with `has_permission(role, permission)` and a `require_permission(permission)` dependency factory. The hard-coded `if context.role not in ("owner", "admin")` check in `workspaces.py:add_member` was replaced by the map-driven dependency, so authorization now comes from one table instead of inline role lists (WARN-B-001: Sentinel is the sole enforcement point; SEN-001 extends this map rather than adding new module-local checks).
+
+**Role matrix (the approved draft):**
+
+| Role | Permissions |
+|---|---|
+| `owner` | `workspace.read`, `workspace.switch`, `members.read`, `members.add`, `members.remove` |
+| `admin` | `workspace.read`, `members.read`, `members.add` |
+| `editor` | `workspace.read` |
+| `approver` | `workspace.read` |
+| `viewer` | `workspace.read` |
+
+`owner` remains non-assignable through the API (creator-is-owner), unchanged from AUTH-002.
+
+**Verification (all run locally, 2026-11-16):**
+
+| Check | Command | Result |
+|---|---|---|
+| Backend tests | `cd apps/api && uv run pytest -q` | 110 passed |
+| Backend lint | `cd apps/api && uv run ruff check .` | All checks passed |
+| Backend type-check | `cd apps/api && uv run mypy src` | No issues in 21 source files |
+| Import boundaries | `cd apps/api && uv run lint-imports` | 1 contract kept, 0 broken |
+
+**Design notes:**
+- `ForbiddenError` is imported from `vistaro.core.errors`, not `vistaro.api.deps`; the `WorkspaceContext` annotation is a string literal. Importing from `api.deps` created a circular import (`deps` re-exports `require_permission`, `permissions` needed `deps`).
+- `add_member` became `async def` so the dependency can be awaited. A non-awaited call silently passed the check (the coroutine was created but never run) and the endpoint answered 409 instead of 403 — caught by the existing `test_member_add_requires_owner_or_admin`.
+- The denied-response code changed from `MEMBER_ADD_NOT_ALLOWED` to the generic `PERMISSION_DENIED`; the test expectation was updated accordingly.
+
+**Not verified:** no live server smoke for this task, no staging environment, and no frontend changes. `SEN-001` still needs `DEC-003`; `ORB-001` approval logic builds on this map.
+
+---
+
 ## 13. Keeping this file small
 
 This file holds rules and workflow only. If it grows, split detail into focused files under `docs/` and link them here. Avoid circular references and duplicated policies. For multi-app repositories, add local `CLAUDE.md` files per app and keep shared rules here.

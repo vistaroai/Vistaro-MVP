@@ -1,31 +1,32 @@
 # ACTIVE TASKS — Vistaro
 
 Execution queue and full ordered task sequence. Definitions and acceptance criteria: `/docs/PROJECT_ROADMAP.md`. Step-by-step instructions per task: `/docs/TASK_PLAYBOOK.md`. Rules: `/CLAUDE.md`.
-Last updated: 2026-11-02 · Cycle: **Cycle 1 — Security baseline (SEC-001)**
+Last updated: 2026-11-16 · Cycle: **Cycle 2 — Feature foundations (UI-001, AUTH-003)**
 
 > Status words match the roadmap. If this file and the roadmap disagree, the roadmap wins; fix this file.
 
 ## Current task
 
-`SEC-001` was merged into `main` via PR #5 on 2026-10-25 and independently verified on 2026-10-27.
+No task is in progress. `UI-001` was merged into `main` via PR #17 on 2026-11-16 and `AUTH-003` was merged the same day; both are `DONE`.
 
-**Audit (2026-10-27):** `API-001` (PR #4) and `SEC-001` (PR #5) were independently audited on `main`: every suite green and both controls verified live against a running server. Both tasks are `DONE`. One defect was found and fixed in the audit: DB probes hung forever when Postgres was unreachable (no `connect_timeout`); see `CLAUDE.md` §12 and WARN-B-013.
+**Team hand-off (2026-11-16):** the next task for the team is **`OBS-001`** (observability and cost recording) — it is the gate for the AI cost caps in AI-001/AI-002. `INFRA-001` (staging half) and `AI-001` can run in parallel; `INFRA-001` waits on the founders' Render/Cloudflare accounts.
 
 | ID | Task | Status | Owner | Why now |
 |---|---|---|---|---|
-| UI-001 | Web app shell: routing, layout, auth screens, API client session/CSRF wiring, state patterns, Playwright setup | IN_PROGRESS | Claude (delegated) | Chosen by founders over AUTH-003 (2026-11-02). Plan presented and awaiting OK; implementation starts only after founders approve |
+| OBS-001 | Observability and cost recording | READY | Team | Gate for AI-001/AI-002 cost caps; dependency-complete (API-001) |
 
-Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001` (PRs #1–#5), `AUTH-001` Phase A (PRs #12/#13), `AUTH-001` Phase B (PR #14), `AUTH-002` (PR #15, 2026-11-02) — details in "Recently completed" and `CLAUDE.md` §12.
+Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001` (PRs #1–#5), `AUTH-001` Phase A (PRs #12/#13), `AUTH-001` Phase B (PR #14), `AUTH-002` (PR #15, 2026-11-02), `UI-001` (PR #17, 2026-11-16), `AUTH-003` (merged 2026-11-16) — details in "Recently completed" and `CLAUDE.md` §12.
 
 ## Next actionable tasks (in order)
 
 | # | ID | Task | Depends on | Status | Notes |
 |---|---|---|---|---|---|
-| 1 | UI-001 | Web app shell | API-001 | IN_PROGRESS | Needs the `/csrf` token wiring into the client callback; plan presented 2026-11-02 |
-| 2 | AUTH-003 | Roles and permission map; `require(permission)` | AUTH-002 | READY (new unblock) | Completes the auth story; required before the first feature module (Wave E) |
-| 3 | OBS-001 | Observability and cost recording | API-001 | READY | Gate for AI-001/AI-002 cost caps |
-| 4 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets — also where Google OAuth credentials + `SESSION_SECRET` land |
-| 5 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
+| 1 | OBS-001 | Observability and cost recording | API-001 | READY | Gate for AI-001/AI-002 cost caps. **Next task for the team** |
+| 2 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets — also where Google OAuth credentials + `SESSION_SECRET` land |
+| 3 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
+| 4 | SEN-001 | Minimal Sentinel: request, decide, consume, expire, audit | AUTH-003, DEC-003 | BLOCKED → now unblocked | `AUTH-003` landed 2026-11-16; still needs `DEC-003` |
+
+Completed in this cycle: `UI-001` (PR #17, 2026-11-16) and `AUTH-003` (2026-11-16).
 
 ## Parallel non-code tasks (can start now)
 
@@ -61,6 +62,8 @@ Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-00
 
 | Date | Item | Note |
 |---|---|---|
+| 2026-11-16 | `AUTH-003` merged into `main` | Single role-to-permission map at `vistaro/sentinel/permissions.py`; `require(permission)` dependency replaces the hard-coded role check in `add_member`. 110/110 backend tests, ruff/mypy/lint-imports clean. See `CLAUDE.md` §12 |
+| 2026-11-16 | `UI-001` merged into `main` via PR #17 | Web app shell: router, layout, auth screens, session guard, workspace switcher, loading/empty/error states, CSRF-refresh mutations, Playwright setup. 43 files, 2256 insertions; vitest 27 green, Playwright E2E 3/3. See `CLAUDE.md` §12 |
 | 2026-11-02 | `AUTH-002` merged into `main` via PR #15 | Workspaces, switching, members; migration `0004` (memberships RLS user branch); 110/110 backend tests, CI 4/4; live smoke recorded in `CLAUDE.md` §12 |
 | 2026-11-01 | `AUTH-001` Phase A+B merged (PRs #12/#13, #14) | Email auth + sessions (Phase A), Google sign-in off-by-default (Phase B). CI 4/4 on both merges; real OAuth credentials remain founder-owned |
 | 2026-10-24 | `SEC-001` implementation | Branch `sec-001-security-baseline`; CSRF, cookie defaults, response headers, Redis rate limiting, dependency audit CI; `IN_REVIEW`. See `CLAUDE.md` §12 |
@@ -79,7 +82,7 @@ Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-00
 
 ## Next recommended action
 
-`UI-001` is in progress: plan branch `ui-001-web-shell` after the founders' OK; review the PR when pushed. `AUTH-003`, `OBS-001`, and non-code tracks can run in parallel; the staging half of `INFRA-001` waits on the founders' Render/Cloudflare accounts.
+`OBS-001` (observability and cost recording) is the next task for the team: it is the gate for the AI cost caps in AI-001/AI-002 and its dependency (API-001) is complete. `INFRA-001` (staging half) and `AI-001` can run in parallel; the staging half of `INFRA-001` waits on the founders' Render/Cloudflare accounts. The non-code tracks (`VAL-001`, `DOC-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001`) can start at any time.
 
 ## Full execution sequence (all tasks, in order)
 
