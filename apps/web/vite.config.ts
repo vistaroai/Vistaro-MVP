@@ -31,5 +31,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Explicit scope: Playwright specs live in e2e/ and use Playwright's
+    // `test()` API. Vitest must never collect them (CI did, and failed with
+    // "Playwright Test did not expect test() to be called here").
+    include: ['src/**/*.test.{ts,tsx}'],
   },
 })
