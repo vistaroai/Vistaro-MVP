@@ -490,6 +490,29 @@ Key decisions recorded during build:
 
 ---
 
+## 12b. Task records
+
+### UI-001 — Web app shell (implemented 2026-11-16, branch `ui-001-shell-code`)
+
+**What was built:** route table (`/login`, `/signup`, `/verify-email`, guarded `/` dashboard placeholder + 404), session guard (`RequireAuth`, 401 → `/login` history-replace), workspace switcher + creation in the header, shadcn-style primitives (hand-seeded for Tailwind v4: button/input/label/card/alert + `cn` helper), shared Loading/Empty/Error/ErrorBoundary states, `RequestError` normalization of the API envelope, Vite dev proxy (`/csrf`, `/auth`, `/workspaces`, `/healthz` → `127.0.0.1:8000`) so session cookies are same-origin in dev, CSRF cookie read at request time (`readCsrfCookie`) plus `refreshCsrfToken` before every unsafe mutation (login/signup/logout/switch/create), forms via react-hook-form + zod (signup mirrors the API's password rules), TanStack Query throughout. Deps added: clsx, tailwind-merge, class-variance-authority, lucide-react, @radix-ui/react-slot, @radix-ui/react-label, @hookform/resolvers; dev: @playwright/test (+playwright), jest-axe.
+
+**Verification (all run):**
+- `apps/web` gates: typecheck 0, lint 0 (4 react-refresh warnings only — hooks colocated with components, accepted pattern), vitest **27/27**, build 0, `codegen:check` 0.
+- Accessibility: jest-axe on login/signup/verify/auth-card — no violations (jsdom; contrast rules need real browsers).
+- **Playwright E2E 3/3** against the real stack (docker + uvicorn + Vite): signed-out redirect to `/login`; wrong credentials shows the API error alert; full flow signup → Mailpit link → SPA verification → login → create workspace → switch → dashboard lists it. Env contract: `VISTARO_E2E=1` gates the API-dependent specs; `pnpm test:e2e` reuses a running Vite (config `reuseExistingServer`); chromium installed once via `pnpm exec playwright install chromium`.
+
+**Defects the E2E caught and fixed:**
+- **StrictMode double-verify (real user-facing bug):** `main.tsx` uses React `<StrictMode>`, which double-invokes effects in dev; the verify screen's `useEffect` fired the one-time token request twice — first call consumed it, second failed and overwrote the screen with "link can't be used" despite success. Fixed by moving verification into TanStack Query (cache deduplicates the double mount). Any future one-time-effect network call must go through Query, not raw `useEffect`.
+- Mailpit token extraction: matched against a JSON-stringified body, the regex swallowed escaped `\n` sequences; now matches `Text`/`HTML` fields with a base64url charset.
+
+**Known gaps (deliberate, recorded):**
+- The email's verification link points at the API's JSON endpoint (`GET /auth/verify`); a user clicking it sees raw JSON. The SPA route `/verify-email?token=…` does the same verification properly. Follow-up: make the API link 302-redirect into the SPA (small backend change, fold into AUTH-003 or a tiny standalone PR).
+- `/auth/me` does not expose `active_workspace_id`, so the switcher cannot show which workspace is active after a reload (it switches on selection; server truth lives on the session row). Small API nicety when real dashboards need it.
+- The switcher/list tests and Playwright assertions account for: native `<select>` options count as hidden to Playwright (assert via `toContainText` on the combobox), and RTL cleanup must be wired in the vitest setup (no globals).
+- Testing Library needs explicit `afterEach(cleanup)` in the vitest setup (globals are off), else all renders accumulate in one document.
+
+---
+
 ## 13. Keeping this file small
 
 This file holds rules and workflow only. If it grows, split detail into focused files under `docs/` and link them here. Avoid circular references and duplicated policies. For multi-app repositories, add local `CLAUDE.md` files per app and keep shared rules here.
