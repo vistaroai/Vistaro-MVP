@@ -1,32 +1,32 @@
 # PROJECT ROADMAP — Vistaro (FINAL, whole roadmap)
 
-Version 2.0 · 2026-10-18. Supersedes the 2026-10-17 draft.
+Version 2.1 · 2026-11-16. Supersedes the 2026-10-18 version 2.0.
 Rules: `/CLAUDE.md`. Current queue and ordered sequence: `/docs/ACTIVE_TASKS.md`. Instructions per task: `/docs/TASK_PLAYBOOK.md`. Risks: `/docs/PROJECT_WARNINGS.md`. **This file is the single source of truth for task status.**
 Design: `/docs/ARCHITECTURE.md`. How to build: `/docs/DEVELOPMENT_GUIDE.md`. Product context: `STARTUP_AI_MASTER_CONTEXT.md`.
 
 ## 1. Authority and honesty
 
 - On 2026-10-18 the founders delegated to Claude the finalization of the architecture, tech stack, and this roadmap. Items finalized under that delegation carry approval flag `DELEGATED`; the founders may change any of them. Items from the founders' own confirmed spec carry `APPROVED-SCOPE`.
-- `REPO-000` inspected the repository on 2026-10-23 and `REPO-001` created the monorepo bootstrap. The only verified software is that bootstrap; no product feature is `DONE`.
+- `REPO-000` inspected the repository on 2026-10-23 and `REPO-001` created the monorepo bootstrap. Since then nine tasks have shipped and been merged: `REPO-001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001`, `AUTH-001` (Phases A and B), `AUTH-002`, `UI-001`, and `AUTH-003`. The table in section 2 and every task row below is maintained against the merge record in section 16; if the two disagree, inspect the code.
 - Bootstrap paths are verified in `CLAUDE.md` §12. Feature paths are filled in when each task starts; use `docs/ARCHITECTURE.md` §3 as the intended layout.
 
 ## 2. Current stage and status summary
 
 | Item | State |
 |---|---|
-| Stage | `REPO-001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001`, `AUTH-001`, `AUTH-002`, `UI-001`, `AUTH-003` DONE (merged via PRs #1-#5, #12-#17; `AUTH-003` merged 2026-11-16). Now: `OBS-001`, `INFRA-001` (staging), `AI-001` ready; non-code tracks open. |
+| Stage | `REPO-001`, `DB-001`, `TEST-001`, `API-001`, `SEC-001`, `AUTH-001`, `AUTH-002`, `UI-001`, `AUTH-003` all `DONE` (merged via PRs #1-#5, #12-#15, #17; `AUTH-003` landed 2026-11-16 as commit `b8772af` plus completion commit). Now: `OBS-001`, `INFRA-001` (staging), `AI-001`, `SEN-001`, `INT-001`, `CON-001` ready; non-code tracks open. |
 | Competition | DTU SEVA 2026, Stage 1 (deadline: **unknown**, see ACTIVE_TASKS) |
 | Team | Anushka Varshney (frontend and platform), Dimple (AI and backend) |
-| Stack | Bootstrap toolchain verified (FastAPI, React/Vite, uv, pnpm); database, Redis, workers, hosting, and integrations unverified |
+| Stack | Bootstrap, database and Redis verified locally and in CI; workers, hosting, and integrations unverified |
 | First niche, pricing, tagline | Undecided |
 
 | Category | Items |
 |---|---|
-| 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001`; `DB-001`; `TEST-001`; `API-001`; `SEC-001` |
+| 1. Completed and verified | Decisions `DEC-001`, `DEC-003`, `DEC-004`; `REPO-000`; `REPO-001`; `DB-001`; `TEST-001`; `API-001`; `SEC-001`; `AUTH-001`; `AUTH-002`; `UI-001`; `AUTH-003` |
 | 2. Implemented but not fully verified | None |
 | 3. In progress | None |
-| 4. Ready to implement | `AUTH-001`, `OBS-001`, `UI-001`, `INFRA-001` (staging part), `AI-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
-| 5. Blocked | `AUTH-002` (waits on `AUTH-001`), `AI-002`, the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001` |
+| 4. Ready to implement | `OBS-001`, `INFRA-001` (staging part), `AI-001`, `INT-001`, `SEN-001`, `CON-001`, `DOC-001`, `VAL-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001` |
+| 5. Blocked | `AI-002` (needs `AI-001` + `OBS-001`), the rest of Phase 1; `VAL-002`; `CLA-003` waits on `RES-001`; `SEN-001` was `BLOCKED` on `AUTH-003` and unblocked 2026-11-16 |
 | 6. Planned for later | Phases 2 to 5 |
 | 7. Still undecided | First niche, pricing, tagline, embeddings provider (`DEC-005`), LLM model names (`DEC-002` evaluation), name clearance |
 
@@ -51,14 +51,14 @@ One complete loop, all steps real (test accounts allowed where stated):
 | Phase | Name | Source | Status |
 |---|---|---|---|
 | 0 | Validation, decisions, definition | Delegated | In progress (decisions done; research tasks ready) |
-| 1 | Core platform and MVP loop | Spec + delegated breakdown | Blocked on `REPO-001` |
+| 1 | Core platform and MVP loop | Spec + delegated breakdown | In progress (9 tasks done; `OBS-001` next) |
 | 1-S | SEVA prototype window (75 days, only if selected) | Delegated | Backlog |
 | 2 | Market, Pulse basics, Sentinel full, follow-ups, visibility | Spec | Backlog |
 | 3 | Goal-driven orchestration, shared memory, support agent | Spec | Backlog |
 | 4 | Advanced automation | Spec | Backlog |
 | 5 | Beta, hardening, launch | Delegated | Backlog |
 
-**Critical path:** `REPO-000` → `REPO-001` → `DB-001` → `AUTH-001/002` → `TEST-001` → `AI-001/002` → `CLA-001/002` → `MUS-001` + `SEN-001` → `MUS-002` → `ORB-001` → `ORB-002` → `CON-001/002` → `E2E-001` → `DEPLOY-001`.
+**Critical path:** `REPO-000` → `REPO-001` → `DB-001` → `TEST-001` → `API-001` → `SEC-001` → `AUTH-001` → `AUTH-002` → `AUTH-003` → `OBS-001` → `AI-001` → `AI-002` → `CLA-001` → `CLA-002` → `SEN-001` → `MUS-001` → `INT-003` → `MUS-002` → `ORB-001` → `ORB-002` → `CON-001` → `CON-002` → `E2E-001` → `DEPLOY-001`.
 
 ---
 
@@ -89,13 +89,13 @@ One complete loop, all steps real (test accounts allowed where stated):
 | ID | Objective and value | Depends on | Acceptance criteria | Required tests | Pri | Status | Approval |
 |---|---|---|---|---|---|---|---|
 | REPO-001 | Create monorepo, CI, `.env.example`, README with verified commands | REPO-000, DEC-001 | Fresh clone runs both apps from README; CI runs on a PR; no secrets in history | Fresh-clone test; secret scan | P0 | DONE (fresh clone verified; CI green on PR #1, 2026-10-23) | DELEGATED |
-| INFRA-001 | Local docker-compose; staging on Render and Cloudflare Pages; secrets configured; **verify** plan, region, `pgvector` availability | REPO-001 | Staging reachable; secrets only in platform store; findings recorded | Smoke test; secret scan | P0 | READY | DELEGATED |
+| INFRA-001 | Local docker-compose; staging on Render and Cloudflare Pages; secrets configured; **verify** plan, region, `pgvector` availability | REPO-001 | Staging reachable; secrets only in platform store; findings recorded | Smoke test; secret scan | P0 | READY (local half verified 2026-10-23: Postgres 16, Redis 7, Mailpit all healthy via compose; staging not started — no `render.yaml`/`wrangler.toml`/`Dockerfile` in the repo) | DELEGATED |
+| UI-001 | Web app shell, routing, auth screens, API client, state patterns | API-001 | Screens handle loading, empty, error; accessibility checks pass | UI tests | P1 | **DONE** (2026-11-16, PR #17 `5c0cd1a`, 43 files / 2256 insertions): vitest 27/27, jest-axe no violations, build, typecheck and lint clean, `codegen:check` green, Playwright E2E 3/3 against the real stack. Note: Playwright is not in CI yet — the E2E evidence is local-only | DELEGATED |
 | DB-001 | Roles, extensions, base schema and migrations (`users`, `workspaces`, `memberships`, `sessions`) with RLS on tenant tables | REPO-001 | Up and down migrations pass on empty and seeded DB; roles correct (`vistaro_app` has no `BYPASSRLS`) | Migration tests | P0 | DONE (verified locally and merged via PR #2, 2026-10-24) | DELEGATED |
 | API-001 | API skeleton: error envelope, request IDs, health endpoints, OpenAPI export, generated TS client, pagination, idempotency helper | REPO-001 | Health and error formats verified; client generation in CI fails on drift | Contract tests | P1 | DONE (merged via PR #4 to `main` at `85d800d`, 2026-10-24; local acceptance checks recorded in `CLAUDE.md` §12) | DELEGATED |
 | TEST-001 | Test harness and generated cross-workspace isolation tests for every tenant table | DB-001 | Test fails if scoping is removed (proves it detects leaks) | The tests themselves | P0 | DONE (verified locally, sabotage proof included; merged via PR #3, 2026-10-24) | DELEGATED |
 | SEC-001 | Security baseline: CSRF, cookie flags, security headers, rate limiting, secret scanning, dependency alerts | API-001 | Each control demonstrated by a test or CI check | Negative tests | P0 | DONE (merged via PR #5, 2026-10-25; controls verified live in tests and locally on 2026-10-27, see `CLAUDE.md` §12) | DELEGATED |
 | OBS-001 | Structured logging, Sentry, `agent_runs` and cost recording, budget table | API-001 | Errors reach Sentry; a sample task records tokens and cost; logs contain no secrets | Log scan; sample run | P1 | READY | DELEGATED |
-| UI-001 | Web app shell, routing, auth screens, API client, state patterns | API-001 | Screens handle loading, empty, error; accessibility checks pass | UI tests | P1 | DONE | DELEGATED |
 
 ### 7.2 Identity, tenancy, access
 
@@ -103,13 +103,13 @@ One complete loop, all steps real (test accounts allowed where stated):
 |---|---|---|---|---|---|---|---|
 | AUTH-001 | Signup, login, logout, email verification, Google sign-in, server-side sessions (F-CORE-01) | DB-001, SEC-001 | Flows work; sessions expire and rotate; passwords hashed with Argon2id | Unit, integration, negative cases | P0 | **DONE** (2026-11-01): Phase A email flows + sessions merged via PRs #12/#13; Phase B Google sign-in merged via PR #14, CI 4/4. Real OAuth credentials are founder-owned (env/secret store); feature stays 503-off until then | APPROVED-SCOPE |
 | AUTH-002 | Workspaces and server-side tenant scoping (F-CORE-02) | AUTH-001, TEST-001 | Creator becomes owner; switching updates session; every tenant query scoped | Isolation tests | P0 | **DONE** (2026-11-02, PR #15, CI 4/4): create/list/switch/members endpoints, migration `0004` (memberships RLS gains a user branch), `tenant_session` helper for every scoped query; 110/110 tests incl. TEST-001 isolation; live smoke recorded in `CLAUDE.md` §12 | APPROVED-SCOPE |
-| AUTH-003 | Roles and permission map; `require(permission)` (F-CORE-04, F-SEN-01) | AUTH-002 | Permission matrix enforced on every route | Generated matrix test | P1 | DONE | APPROVED-SCOPE (role list delegated) |
+| AUTH-003 | Roles and permission map; `require(permission)` (F-CORE-04, F-SEN-01) | AUTH-002 | Permission matrix enforced on every route | Generated matrix test | P1 | **DONE** (2026-11-16): single map `vistaro/sentinel/permissions.py` + `has_permission` / `require` / `may_approve` / `PROTECTED_ROUTES`; `PermissionGuard` dependency wires `switch_workspace`, `list_members`, `add_member` to the map (no inline role tuples); `tests/test_permission_matrix.py` walks every role × every protected route and fails on map/app drift; 132 backend tests green, ruff/mypy/lint-imports clean | APPROVED-SCOPE (role list delegated) |
 
 ### 7.3 Integrations and agent runtime
 
 | ID | Objective and value | Depends on | Acceptance criteria | Required tests | Pri | Status | Approval |
 |---|---|---|---|---|---|---|---|
-| INT-001 | Connector framework with encrypted tokens, typed errors, circuit breaker (F-CORE-03) | AUTH-002 | Connect, refresh, revoke; tokens never logged; key rotation works | Integration test; log scan | P1 | BLOCKED | APPROVED-SCOPE |
+| INT-001 | Connector framework with encrypted tokens, typed errors, circuit breaker (F-CORE-03) | AUTH-002 | Connect, refresh, revoke; tokens never logged; key rotation works | Integration test; log scan | P1 | READY | APPROVED-SCOPE |
 | INT-003 | `ManualPublish` connector | INT-001 | Post package produced; owner confirms; record stored | Integration test | P1 | BLOCKED | DELEGATED |
 | INT-002 | Meta Graph connector for Instagram and Facebook Pages in development mode; **verify** requirements | INT-001, SEN-001 | Publish to a test account after approval; metrics fetch works; findings recorded | Sandbox integration test | P2 | BLOCKED | DELEGATED |
 | AI-001 | Agent task runtime: claim, retries, timeouts, step caps, idempotency, reaper for stale tasks (F-CORE-05) | API-001, DB-001 | Retry then visible failure; no duplicate side effect under duplicate delivery or worker crash | Failure-injection tests | P1 | READY | APPROVED-SCOPE |
@@ -123,11 +123,11 @@ One complete loop, all steps real (test accounts allowed where stated):
 | CLA-001 | Brand profile capture, versioning, owner approval (F-CLA-01) | AUTH-002, AI-002 | Approved profile is the only one agents use | API and UI tests | P1 | BLOCKED | APPROVED-SCOPE |
 | CLA-002 | Brand scoring: deterministic checks plus small-tier rubric (F-CLA-02) | CLA-001, TEST-002 | Eval set of 30+ labeled examples; agreement recorded; threshold chosen from data | Eval run | P1 | BLOCKED | APPROVED-SCOPE |
 | MUS-001 | On-brand content generation with scoring and bounded rewrite (F-MUS-01) | CLA-002, AI-001 | Drafts valid JSON; low scores rewritten up to cap, then queued | Eval and failure tests | P1 | BLOCKED | APPROVED-SCOPE |
-| SEN-001 | Minimal Sentinel: request, decide, consume, expire, audit; payload-hash binding (subset of F-SEN-02/03) | AUTH-003, DEC-003 | No publish or send without a valid approval; changed payload rejected; one-time use; audit rows written; app role cannot update or delete audit | Approval-bypass tests | P0 | BLOCKED | APPROVED-SCOPE (constraint C-01) |
+| SEN-001 | Minimal Sentinel: request, decide, consume, expire, audit; payload-hash binding (subset of F-SEN-02/03) | AUTH-003, DEC-003 | No publish or send without a valid approval; changed payload rejected; one-time use; audit rows written; app role cannot update or delete audit | Approval-bypass tests | P0 | READY | APPROVED-SCOPE (constraint C-01) |
 | MUS-002 | Scheduling and approval-gated publishing (F-MUS-03, F-MUS-04) | MUS-001, SEN-001, INT-003 | Approved item publishes; unapproved cannot | Integration test | P1 | BLOCKED | APPROVED-SCOPE |
 | ORB-001 | Goal intake and plan proposal with registry-bounded actions and deterministic validation (F-ORB-01) | CLA-001, AI-001 | Invalid plans rejected; owner approves before execution; models cannot waive approvals | Plan-validity eval; loop and cap tests | P1 | BLOCKED | APPROVED-SCOPE |
 | ORB-002 | Initial Orbit dashboard (F-ORB-03) | ORB-001, UI-001 | Shows goals, steps, approvals, results | UI tests | P1 | BLOCKED | APPROVED-SCOPE |
-| CON-001 | Lead form endpoint and lead inbox (F-CON-01) | AUTH-002, SEC-001 | Leads arrive tagged by source; spam and rate limits work | Integration and abuse tests | P1 | BLOCKED | APPROVED-SCOPE |
+| CON-001 | Lead form endpoint and lead inbox (F-CON-01) | AUTH-002, SEC-001 | Leads arrive tagged by source; spam and rate limits work | Integration and abuse tests | P1 | READY | APPROVED-SCOPE |
 | CON-002 | Contacts, pipeline, deterministic lead scoring v1 (F-CON-02, F-CON-03) | CON-001 | Scores and stages update; events recorded | Unit and API tests | P2 | BLOCKED | APPROVED-SCOPE |
 
 ### 7.5 Integration and delivery
@@ -207,18 +207,19 @@ One complete loop, all steps real (test accounts allowed where stated):
 
 | Blocker | Affects |
 |---|---|
-| Repository not yet created | All build tasks |
 | Hosting plan, region, `pgvector` availability unverified | `INFRA-001`, Phase 3 |
 | Module-name mapping and full report not confirmed | `DOC-001`, naming in code |
 | No real owner evidence | `VAL-002`, `SEVA-001`, prioritization |
 | AI-platform access unverified | `CLA-003` |
 | Meta app review requirements unverified | `INT-002` |
+| Real OAuth credentials + `SESSION_SECRET` not configured | `AUTH-001` Phase B end-to-end test |
+| SEVA deadline unknown | `SEVA-001` priority |
 
 ## 15. Next recommended action
 
-1. `AUTH-001` is now `READY` (SEC-001 and DB-001 done). It is the next P0 build task.
-2. In parallel: `OBS-001`, `UI-001` (both were waiting only on API-001), and the non-code tracks (`VAL-001`, `DOC-001`, `NAME-001`, `RES-001`).
-3. `INFRA-001` staging verification remains open and needs founder decisions and platform accounts.
+1. `OBS-001` (observability and cost recording) is the next task: the gate for `AI-001`/`AI-002`, and its dependency (`API-001`) is complete.
+2. In parallel: `AI-001` (dependency-complete, Wave D), `INFRA-001` staging (waits on the founders' Render/Cloudflare accounts), and `SEN-001` (now READY after `AUTH-003`; still constrains what can go live).
+3. The non-code tracks can start at any time: `VAL-001`, `DOC-001`, `NAME-001`, `RES-001`, `LEGAL-001`, `SEVA-001`.
 
 ## 16. Change log
 
@@ -236,12 +237,14 @@ One complete loop, all steps real (test accounts allowed where stated):
 | 2026-10-24 | `API-001` merged to `main` via PR #4 at `85d800d`; SEC-001 dependency satisfied | Claude (delegated) |
 | 2026-10-24 | `SEC-001` implemented on `sec-001-security-baseline`: CSRF token endpoint and validation, environment-aware cookie defaults, security headers/CSP/HSTS, Redis fixed-window rate limits, Python/Node dependency audits and Dependabot updates. Status `IN_REVIEW`; checks and limitations in `CLAUDE.md` §12 | Claude (delegated) |
 | 2026-10-25 | `SEC-001` merged into `main` via PR #5. |
-| 2026-10-27 | Independent audit of `API-001` and `SEC-001` on `main` (Anushka + AI): all suites green (61 backend tests incl. 14 security, lint, mypy, import-linter, vitest 6/6, lint/typecheck/build, OpenAPI no-drift; live smoke of health, readiness, headers, error envelope, CSRF). Audit found a real defect: DB probes hung indefinitely when Postgres was unreachable because `build_engine` set no `connect_timeout` (WARN-B-013); fix prepared on `fix-readyz-connect-timeout`. `SEC-001` marked `DONE`. | Claude (delegated) |
+| 2026-10-27 | Independent audit of `API-001` and `SEC-001` on `main` (Anushka + AI): all suites green (61 backend tests incl. 14 security, lint, mypy, import-linter, vitest 6/6, lint/typecheck/build, OpenAPI no-drift; live smoke of health, readiness, headers, error envelope, CSRF). Audit found a real defect: DB probes hung indefinitely when Postgres was unreachable because `build_engine` set no `connect_timeout` (WARN-B-013); fix bound to the branch `fix-readyz-connect-timeout` (never merged). | Claude (delegated) |
+| 2026-10-28 | `WARN-B-013` fix merged into `main` as `51f47b7` ("bound DB connect timeout so /readyz fails fast instead of hanging"). The duplicate branch was never an ancestor of `main`; recorded here for traceability. | Claude (delegated) |
 | 2026-10-28 | Founders requested no bot-authored commits: removed `.github/dependabot.yml` so Dependabot never opens PRs again; dependency bumps become manual (`uv lock` / `pnpm update`). Security alerts remain available in repository settings. | Claude (delegated) |
 | 2026-10-28 | `AUTH-001` Phase A implemented on `auth-001-email-session`: migration `0003` (`email_verifications` table, `sessions.csrf_token_hash` column), Argon2id via argon2-cffi, digest-stored session and verification tokens, generic credentials/verification errors, equalized unknown-account timing, `GET /csrf` re-binding, 27 new tests, live smoke through real Mailpit delivery. Google sign-in (Phase B) awaits founders' OAuth client credentials. | Claude (delegated) |
-| 2026-11-01 | Phase A merged into `main` via PRs #12/#13, all four CI jobs green after a one-line TypeScript-client regeneration fix (`codegen:check` had drifted with the final `/csrf` docstring). | Claude (delegated) |
-| 2026-11-16 | `UI-001` merged into `main` via PR #17: web app shell (router, layout, auth screens, session guard, workspace switcher, shared loading/empty/error states, CSRF-refresh mutations, TanStack Query, shadcn-style primitives, dev proxy, Playwright setup). 43 files, 2256 insertions. Gates green: typecheck, lint, vitest 27 tests, build, codegen:check; jest-axe no violations; Playwright E2E 3/3 against the real stack. E2E caught and fixed a StrictMode double-verify bug. `WARN-E-008` recorded. | Claude (delegated) |
-| 2026-11-16 | `AUTH-003` merged into `main`: single role-to-permission map at `vistaro/sentinel/permissions.py` with `has_permission()` and a `require(permission)` dependency factory; the hard-coded `("owner", "admin")` check in `workspaces.py:add_member` replaced by the map-driven dependency (403 `PERMISSION_DENIED`). Role matrix: `owner`=all, `admin`=read+members, `editor`/`approver`/`viewer`=read only. 110/110 backend tests green; ruff, mypy and lint-imports clean. `SEN-001` can now extend the map without re-wiring each route. | Claude (delegated) |
-| 2026-11-01 | `AUTH-002` merged into `main` via PR #15: workspaces create/list/switch + members endpoints, migration `0004` (memberships RLS user branch), `tenant_session` helper; 110/110 backend tests, all TEST-001 isolation tests green; live-smoked (create 201, switch 200, foreign 404). CI 4/4. `UI-001` chosen as the next task by the founders; `AUTH-003` unblocked. | Claude (delegated) |
+| 2026-10-28 | `AUTH-001` Phase A implemented on `auth-001-email-session` (see row above); Phase A merged into `main` via PRs #12/#13 (#12 on 2026-10-28, #13 on 2026-11-01), all four CI jobs green after a one-line TypeScript-client regeneration fix (`codegen:check` had drifted with the final `/csrf` docstring). | Claude (delegated) |
 | 2026-11-01 | `AUTH-001` Phase B implemented on `auth-001-google-oauth`: Google sign-in via Authlib's Starlette client (`/auth/google/login` + `/auth/google/callback`), feature off (503 `OAUTH_NOT_CONFIGURED`) until founders set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` + `SESSION_SECRET`. Account find/link/create rules with `OAUTH_ACCOUNT_CONFLICT` on a different-`sub` conflict and one generic `OAUTH_FLOW_FAILED` envelope. `itsdangerous` added; 11 new tests (99 total); OpenAPI + TS client regenerated; live-smoked the off state. Merged into `main` via PR #14, CI 4/4 green; `AUTH-001` marked `DONE`. | Claude (delegated) |
-| 2026-11-01 | `AUTH-002` built on `auth-002-workspaces`: `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{id}/switch`, `GET/POST /workspaces/{id}/members` per the architecture endpoint table. Migration `0004` extends the memberships RLS policy with an `app.user_id` branch so members can list their own workspaces (cross-workspace isolation unchanged; TEST-001 all green). New `tenant_session(user_id, workspace_id)` helper in `db/tenancy.py` — every scoped query in AUTH-002 routes goes through it, and the same scoped pattern is what future repositories must reuse. Session-bound CSRF is enforced on all unsafe workspace routes. 110/110 backend tests; live smoke: create 201, switch 200, foreign workspace 404. | Claude (delegated) |
+| 2026-11-01 | `AUTH-002` built on branch `auth-002-workspaces`: `POST /workspaces`, `GET /workspaces`, `POST /workspaces/{id}/switch`, `GET/POST /workspaces/{id}/members` per the architecture endpoint table. Migration `0004` extends the memberships RLS policy with an `app.user_id` branch so members can list their own workspaces (cross-workspace isolation unchanged; TEST-001 all green). New `tenant_session(user_id, workspace_id)` helper in `db/tenancy.py` — every scoped query in AUTH-002 routes goes through it, and the same scoped pattern is what future repositories must reuse. Session-bound CSRF is enforced on all unsafe workspace routes. 110/110 backend tests; live smoke: create 201, switch 200, foreign workspace 404. | Claude (delegated) |
+| 2026-11-02 | `AUTH-002` merged into `main` via PR #15; 110/110 backend tests, all TEST-001 isolation tests green; CI 4/4; live smoke recorded above. Task marked `DONE`. | Claude (delegated) |
+| 2026-11-16 | `d3c1cbd`: bumped `dnspython` 2.9.2 and `opentelemetry-api` 1.45.2 — new GHSA/CVE advisories failed `uv audit`. PR #16 (`ui-001-web-shell`) merged ahead of #17 with zero file changes; #17 is the actual UI-001 merge. | Claude (delegated) |
+| 2026-11-16 | `UI-001` merged into `main` via PR #17: web app shell (router, layout, auth screens, session guard, workspace switcher, shared loading/empty/error states, CSRF-refresh mutations, TanStack Query, shadcn-style primitives, dev proxy, Playwright setup). 43 files, 2256 insertions. Gates green: typecheck, lint, vitest 27 tests, build, codegen:check; jest-axe no violations; Playwright E2E 3/3 against the real stack. E2E caught and fixed a StrictMode double-verify bug. `WARN-E-008` recorded. Note: Playwright is not in CI yet. | Claude (delegated) |
+| 2026-11-16 | `AUTH-003` completed on `main`: single role-to-permission map at `vistaro/sentinel/permissions.py` with `has_permission`, `require` and `may_approve` plus a `PROTECTED_ROUTES` registry; `PermissionGuard` dependency in `api/deps.py` enforces it; the inline `("owner", "admin")` tuple in `add_member`, `list_members` and `switch_workspace` was replaced by the map (403 `PERMISSION_DENIED`). Generated matrix test (`tests/test_permission_matrix.py`) covers every role × every protected route and fails on app/map drift; `sentinel/__init__.py` added; OpenAPI unchanged. 132 backend tests green; ruff, mypy, lint-imports clean. | Claude (delegated) |

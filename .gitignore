@@ -15,6 +15,11 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+pytest_*.txt
+pytest_output.txt
+test_output.txt
+run.txt
+tmp_*.txt
 
 # Node
 node_modules/

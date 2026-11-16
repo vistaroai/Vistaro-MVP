@@ -30,8 +30,8 @@ If the repository uses `AGENTS.md` for shared agent instructions, keep it as a t
 
 ### Status of the project at the time this file was written (verify before trusting)
 
-- Vistaro is at the **bootstrap-complete stage**. `REPO-001` (2026-10-23) created the monorepo, minimal API and web shells, local compose file, CI workflow, and verified commands (see §12), and was merged into `main` via PR #1. No product feature is implemented; feature statements remain targets until their tasks are verified.
-- No software feature is `DONE`. The architecture and technology stack are **decided** (see `docs/ARCHITECTURE.md`, finalized 2026-10-18 under the founders' delegation; the founders may change them through the process in §9). Pricing, first customer niche, tagline, and exact LLM model names are **still undecided**.
+- Vistaro is at the **core-platform stage** as of 2026-11-16. `REPO-001` created the bootstrap; the backend tasks `DB-001`, `TEST-001`, `API-001`, `SEC-001`, `AUTH-001` (Phases A and B), `AUTH-002` and `AUTH-003` are merged and `DONE` (PRs #1-#5, #12-#15, and the 2026-11-16 AUTH-003 completion), as is the frontend shell `UI-001` (PR #17). Verify any status against the code and `git log`, never against this sentence alone.
+- The architecture and technology stack are **decided** (see `docs/ARCHITECTURE.md`, finalized 2026-10-18 under the founders' delegation; the founders may change them through the process in §9). Pricing, first customer niche, tagline, and exact LLM model names are **still undecided**.
 - If the repository now contains code, **the repository is the evidence of what exists**. Update the roadmap to match it (see §12).
 
 ---
@@ -515,35 +515,38 @@ Key decisions recorded during build:
 
 ### AUTH-003 — Roles and permission map (implemented 2026-11-16)
 
-**What was built:** a single role-to-permission map at `apps/api/src/vistaro/sentinel/permissions.py`, with `has_permission(role, permission)` and a `require_permission(permission)` dependency factory. The hard-coded `if context.role not in ("owner", "admin")` check in `workspaces.py:add_member` was replaced by the map-driven dependency, so authorization now comes from one table instead of inline role lists (WARN-B-001: Sentinel is the sole enforcement point; SEN-001 extends this map rather than adding new module-local checks).
+**What was built:** a single role-to-permission map at `apps/api/src/vistaro/sentinel/permissions.py`, with `has_permission(role, permission)`, `require(user, action, workspace)` (the `sentinel.permissions.require(user, action, workspace)` call shape from `docs/ARCHITECTURE.md` §5), `may_approve(...)` (the approver rule) and a `PROTECTED_ROUTES` registry. The route-level dependency is `require_permission(permission)` in `vistaro/api/deps.py`; it builds a `PermissionGuard` whose `permission` attribute the matrix test reads. The hard-coded `("owner", "admin")` tuple in `add_member`, `list_members` and `switch_workspace` was replaced by the map, so authorization now comes from one table instead of inline role lists (WARN-B-001, WARN-B-006). A generated matrix test (`apps/api/tests/test_permission_matrix.py`) walks every role × every protected route, plus drift checks that fail if the registry and the live route table disagree.
 
-**Role matrix (the approved draft):**
+**Role matrix:**
 
 | Role | Permissions |
 |---|---|
-| `owner` | `workspace.read`, `workspace.switch`, `members.read`, `members.add`, `members.remove` |
-| `admin` | `workspace.read`, `members.read`, `members.add` |
-| `editor` | `workspace.read` |
-| `approver` | `workspace.read` |
-| `viewer` | `workspace.read` |
+| `owner` | every permission (`workspace.read`, `workspace.switch`, `members.read`, `members.add`, `members.remove`, `approvals.request`, `approvals.approve`) |
+| `admin` | `workspace.read`, `workspace.switch`, `members.read`, `members.add`, `approvals.request`, `approvals.approve` |
+| `editor` | `workspace.read`, `workspace.switch`, `members.read`, `approvals.request` |
+| `approver` | `workspace.read`, `workspace.switch`, `members.read`, `approvals.request`, `approvals.approve` |
+| `viewer` | `workspace.read`, `workspace.switch`, `members.read`, `approvals.request` |
 
-`owner` remains non-assignable through the API (creator-is-owner), unchanged from AUTH-002.
+"Read" is `workspace.read`, `workspace.switch` and `members.read` for every member: any member of a workspace can read it, list its members and switch into it. That matches what AUTH-002 already shipped and its tests assert. `owner` remains non-assignable through the API (creator-is-owner), unchanged from AUTH-002. The `approvals.*` permissions are the minimum needed to express the approver rule from `docs/ARCHITECTURE.md` §5; they are not wired to any route yet (`SEN-001` will consume them).
 
 **Verification (all run locally, 2026-11-16):**
 
 | Check | Command | Result |
 |---|---|---|
-| Backend tests | `cd apps/api && uv run pytest -q` | 110 passed |
+| Backend tests | `cd apps/api && uv run pytest -q` | 132 passed (110 before this task; +22 new, incl. the 15 generated matrix cases) |
 | Backend lint | `cd apps/api && uv run ruff check .` | All checks passed |
-| Backend type-check | `cd apps/api && uv run mypy src` | No issues in 21 source files |
+| Backend type-check | `cd apps/api && uv run mypy src` | No issues in 22 source files |
 | Import boundaries | `cd apps/api && uv run lint-imports` | 1 contract kept, 0 broken |
 
 **Design notes:**
-- `ForbiddenError` is imported from `vistaro.core.errors`, not `vistaro.api.deps`; the `WorkspaceContext` annotation is a string literal. Importing from `api.deps` created a circular import (`deps` re-exports `require_permission`, `permissions` needed `deps`).
-- `add_member` became `async def` so the dependency can be awaited. A non-awaited call silently passed the check (the coroutine was created but never run) and the endpoint answered 409 instead of 403 — caught by the existing `test_member_add_requires_owner_or_admin`.
-- The denied-response code changed from `MEMBER_ADD_NOT_ALLOWED` to the generic `PERMISSION_DENIED`; the test expectation was updated accordingly.
+- `sentinel/permissions.py` imports only `core.errors`; it never imports `api.deps`, so no circular import is possible. `api.deps` imports the sentinel map at module level.
+- `PermissionGuard` is a callable class rather than an attribute-tagged function: `setattr` on a closure failed the linter and the attribute annotation failed mypy, and a guard object is typed without either hack. FastAPI accepts callable instances as dependencies.
+- This FastAPI version wraps each `include_router` in a lazy `_IncludedRouter` container, so `app.routes` is not the whole route table; both the drift check and the matrix test walk `original_router` recursively.
+- The `require_permission` dependency resolves the same cached workspace context the route already asks for (`get_workspace_context` is one query), and the `workspaces` routes use `Annotated[WorkspaceContext, Depends(...)]` for the guard.
+- Earlier attempts put `require_permission` in `api/deps.py` reaching into `sentinel.permissions` at module import time and produced a circular import; `permissions.py` having zero `api` imports is the durable fix.
+- The denied-response code is the generic `PERMISSION_DENIED` (the default of `ForbiddenError`), not a route-specific code; `test_member_add_requires_owner_or_admin` asserts it.
 
-**Not verified:** no live server smoke for this task, no staging environment, and no frontend changes. `SEN-001` still needs `DEC-003`; `ORB-001` approval logic builds on this map.
+**Not verified:** no live server smoke for this task, no staging environment, and no frontend changes. `SEN-001` still needs `DEC-003`, which is done, so `SEN-001` is now `READY`; the approval endpoints do not exist yet, so the approver rule is enforced only by `may_approve()` and the tests around it.
 
 ---
 

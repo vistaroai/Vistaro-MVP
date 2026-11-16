@@ -24,7 +24,9 @@ Merged and marked DONE: `REPO-000/001`, `DB-001`, `TEST-001`, `API-001`, `SEC-00
 | 1 | OBS-001 | Observability and cost recording | API-001 | READY | Gate for AI-001/AI-002 cost caps. **Next task for the team** |
 | 2 | INFRA-001 | Local docker-compose and staging; verify hosting plan and `pgvector` | REPO-001 | READY (local half verified) | Staging remains: Render, Cloudflare Pages, secrets — also where Google OAuth credentials + `SESSION_SECRET` land |
 | 3 | AI-001 | Agent task runtime | API-001, DB-001 | READY | Dependency-complete; Wave D |
-| 4 | SEN-001 | Minimal Sentinel: request, decide, consume, expire, audit | AUTH-003, DEC-003 | BLOCKED → now unblocked | `AUTH-003` landed 2026-11-16; still needs `DEC-003` |
+| 4 | SEN-001 | Minimal Sentinel: request, decide, consume, expire, audit | AUTH-003, DEC-003 | READY | Unblocked 2026-11-16; still constrains what may go live |
+| 5 | INT-001 | Connector framework | AUTH-002 | READY | Encrypted tokens, typed errors, circuit breaker (Wave D) |
+| 6 | CON-001 | Lead form endpoint and inbox | AUTH-002, SEC-001 | READY | Wave E |
 
 Completed in this cycle: `UI-001` (PR #17, 2026-11-16) and `AUTH-003` (2026-11-16).
 
@@ -62,12 +64,12 @@ Completed in this cycle: `UI-001` (PR #17, 2026-11-16) and `AUTH-003` (2026-11-1
 
 | Date | Item | Note |
 |---|---|---|
-| 2026-11-16 | `AUTH-003` merged into `main` | Single role-to-permission map at `vistaro/sentinel/permissions.py`; `require(permission)` dependency replaces the hard-coded role check in `add_member`. 110/110 backend tests, ruff/mypy/lint-imports clean. See `CLAUDE.md` §12 |
+| 2026-11-16 | `AUTH-003` merged into `main` | Single role-to-permission map at `vistaro/sentinel/permissions.py` (`has_permission`, `require`, `may_approve`, `PROTECTED_ROUTES` registry); `require_permission` dependency enforces it in `switch_workspace`, `list_members` and `add_member`; inline role tuples removed; generated matrix test (`tests/test_permission_matrix.py`); 132 backend tests green, ruff/mypy/lint-imports clean. See `CLAUDE.md` §12 |
 | 2026-11-16 | `UI-001` merged into `main` via PR #17 | Web app shell: router, layout, auth screens, session guard, workspace switcher, loading/empty/error states, CSRF-refresh mutations, Playwright setup. 43 files, 2256 insertions; vitest 27 green, Playwright E2E 3/3. See `CLAUDE.md` §12 |
 | 2026-11-02 | `AUTH-002` merged into `main` via PR #15 | Workspaces, switching, members; migration `0004` (memberships RLS user branch); 110/110 backend tests, CI 4/4; live smoke recorded in `CLAUDE.md` §12 |
 | 2026-11-01 | `AUTH-001` Phase A+B merged (PRs #12/#13, #14) | Email auth + sessions (Phase A), Google sign-in off-by-default (Phase B). CI 4/4 on both merges; real OAuth credentials remain founder-owned |
-| 2026-10-24 | `SEC-001` implementation | Branch `sec-001-security-baseline`; CSRF, cookie defaults, response headers, Redis rate limiting, dependency audit CI; `IN_REVIEW`. See `CLAUDE.md` §12 |
-| 2026-10-24 | `API-001` implemented and merged via PR #4 | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. Local acceptance checks recorded in `CLAUDE.md` §12. Status: DONE |
+| 2026-10-24 | `SEC-001` implemented and merged via PR #5 | Branch `sec-001-security-baseline`; CSRF, cookie defaults, response headers, Redis rate limiting, dependency audit CI. Status: `DONE` |
+| 2026-10-24 | `API-001` implemented and merged via PR #4 | Error envelope, typed exceptions, request-ID middleware, `/healthz`+`/readyz`, OpenAPI export, TypeScript client, cursor-pagination, idempotency helper. Local acceptance checks recorded in `CLAUDE.md` §12. Status: `DONE` |
 | 2026-10-24 | `TEST-001` tenancy harness | Isolation tests, pooled-connection proof, sabotage check; caught and fixed the unset-scope policy defect (migration `0002`); CI gained a Postgres service. Merged via PR #3 |
 | 2026-10-23 | `REPO-001` monorepo bootstrap | Created apps/api, apps/web, infra, CI; fresh clone verified; CI green on PR #1. State recorded in `CLAUDE.md` §12 |
 | 2026-10-23 | `REPO-000` repository inspection | Docs-only repository on `main`; no application code or runnable app commands. State recorded in `CLAUDE.md` §12 |
